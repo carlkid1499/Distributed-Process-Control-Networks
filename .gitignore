@@ -1,0 +1,12 @@
+# Place this file in the top level directory
+# of your repository (same folder as <project>.X)
+# and rename it as .gitignore (no extension)
+#
+*/build
+*/dist
+*/debug
+*/nbproject/private
+*/nbproject/Makefile-*
+*/nbproject/Package-*
+/html/
+latex/
