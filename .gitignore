@@ -10,3 +10,4 @@
 */nbproject/Package-*
 /html/
 latex/
+*.o
