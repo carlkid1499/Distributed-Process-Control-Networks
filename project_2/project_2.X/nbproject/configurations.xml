@@ -21,7 +21,6 @@
       <itemPath>../trcConfig.h</itemPath>
       <itemPath>../trcSnapshotConfig.h</itemPath>
       <itemPath>../trcStreamingConfig.h</itemPath>
-      <itemPath>ISR_Support.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -45,8 +44,7 @@
       <itemPath>../trcKernelPort.c</itemPath>
       <itemPath>../trcSnapshotRecorder.c</itemPath>
       <itemPath>../trcStreamingRecorder.c</itemPath>
-      <itemPath>../vLEDCHandler_ISR.c</itemPath>
-      <itemPath>vLEDC_ISR_Wrapper.s</itemPath>
+      <itemPath>../vLEDC_ISR_Wrapper.S</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
