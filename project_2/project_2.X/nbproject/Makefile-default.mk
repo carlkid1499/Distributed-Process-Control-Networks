@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c
+SOURCEFILES_QUOTED_IF_SPACED=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c vLEDC_ISR_Wrapper.s
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/332309696/port.o.d ${OBJECTDIR}/_ext/332309696/port_asm.o.d ${OBJECTDIR}/_ext/449926602/tasks.o.d ${OBJECTDIR}/_ext/449926602/list.o.d ${OBJECTDIR}/_ext/1884096877/heap_4.o.d ${OBJECTDIR}/_ext/449926602/queue.o.d ${OBJECTDIR}/_ext/1472/main.o.d ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o.d ${OBJECTDIR}/_ext/1472/trcKernelPort.o.d ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o.d ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o ${OBJECTDIR}/vLEDC_ISR_Wrapper.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/332309696/port.o.d ${OBJECTDIR}/_ext/332309696/port_asm.o.d ${OBJECTDIR}/_ext/449926602/tasks.o.d ${OBJECTDIR}/_ext/449926602/list.o.d ${OBJECTDIR}/_ext/1884096877/heap_4.o.d ${OBJECTDIR}/_ext/449926602/queue.o.d ${OBJECTDIR}/_ext/1472/main.o.d ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o.d ${OBJECTDIR}/_ext/1472/trcKernelPort.o.d ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o.d ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o.d ${OBJECTDIR}/vLEDC_ISR_Wrapper.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o
+OBJECTFILES=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o ${OBJECTDIR}/vLEDC_ISR_Wrapper.o
 
 # Source Files
-SOURCEFILES=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c
+SOURCEFILES=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c vLEDC_ISR_Wrapper.s
 
 
 CFLAGS=
@@ -94,7 +94,15 @@ MP_LINKER_FILE_OPTION=
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: assemble
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
+${OBJECTDIR}/vLEDC_ISR_Wrapper.o: vLEDC_ISR_Wrapper.s  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/vLEDC_ISR_Wrapper.o 
+	@${FIXDEPS} "${OBJECTDIR}/vLEDC_ISR_Wrapper.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC} $(MP_EXTRA_AS_PRE)  -D__DEBUG  -D__MPLAB_DEBUGGER_PK3=1 -c -mprocessor=$(MP_PROCESSOR_OPTION)  -o ${OBJECTDIR}/vLEDC_ISR_Wrapper.o vLEDC_ISR_Wrapper.s  -Wa,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_AS_POST),--defsym=__ICD2RAM=1,--defsym=__MPLAB_DEBUG=1,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_PK3=1,--gdwarf-2,-MD="${OBJECTDIR}/vLEDC_ISR_Wrapper.o.d" -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
 else
+${OBJECTDIR}/vLEDC_ISR_Wrapper.o: vLEDC_ISR_Wrapper.s  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/vLEDC_ISR_Wrapper.o 
+	@${FIXDEPS} "${OBJECTDIR}/vLEDC_ISR_Wrapper.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC} $(MP_EXTRA_AS_PRE)  -c -mprocessor=$(MP_PROCESSOR_OPTION)  -o ${OBJECTDIR}/vLEDC_ISR_Wrapper.o vLEDC_ISR_Wrapper.s  -Wa,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_AS_POST),--gdwarf-2,-MD="${OBJECTDIR}/vLEDC_ISR_Wrapper.o.d" -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
 endif
 
 # ------------------------------------------------------------------------------------

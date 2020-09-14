@@ -2,6 +2,10 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/C:/Users/port3116/OneDrive%20-%20University%20of%20Idaho/UofI_20-21/ECE-443/FreeRTOSv10.3.1/FreeRTOS/Projects/project_2/main.c</file>
+            <file>file:/C:/Users/port3116/OneDrive%20-%20University%20of%20Idaho/UofI_20-21/ECE-443/FreeRTOSv10.3.1/FreeRTOS/Source/portable/MPLAB/PIC32MX/port_asm.S</file>
+            <file>file:/C:/Users/port3116/OneDrive%20-%20University%20of%20Idaho/UofI_20-21/ECE-443/FreeRTOSv10.3.1/FreeRTOS/Projects/project_2/project_2.X/vLEDC_ISR_Wrapper.S</file>
+        </group>
     </open-files>
 </project-private>

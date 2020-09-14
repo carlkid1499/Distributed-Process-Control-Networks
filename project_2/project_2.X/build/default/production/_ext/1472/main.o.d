@@ -16,4 +16,7 @@ build/default/production/_ext/1472/main.o:  \
  ../../../Source/include/mpu_wrappers.h  \
 ../../../Source/include/task.h  \
  ../../../Source/include/list.h  \
-../CerebotMX7cK.h 
+../../../Source/include/semphr.h  \
+ ../../../Source/include/queue.h  \
+../../../Source/include/task.h  \
+ ../CerebotMX7cK.h 
