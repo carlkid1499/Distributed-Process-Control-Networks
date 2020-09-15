@@ -1,28 +1,26 @@
 /** @file main.c
  * 
- * @brief Main program file for Reference Design 1 using FreeRTOS10 
+ * @brief Project 2: Multitasking +  CNI + Semaphores
  *
  * @par       
  * Demonstrates the use of FreeRTOS, Doxygen, Git, and Tracealyzer
  *
  * @author
- * Dr J
+ * Carlos Santos
  * @date
- * 07 SEP 2020
+ * September 15, 2020
  */
 
 /* Kernel includes. */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
-/* Standard demo includes. */
-//#include "partest.h"
 #include <plib.h>
 
 /* Hardware specific includes. */
 #include "CerebotMX7cK.h"
 
-/* Home board development */
+/* Carlos Home board development set if at home */
 #define HOME_PRO_MX7_BOARD 1
 /*-----------------------------------------------------------*/
 
@@ -42,39 +40,53 @@ SemaphoreHandle_t LEDC_Semaphore;
 // Note a MUTEX CAN NOT BE USED IN AN ISR!
 /* ----- End: Global handle for Binary Semaphore ----- */
 
+/* ----- Begin: Queue Handle(s) ----- */
+xQueueHandle QBTN1Status;
+/* -----  End:  Queue Handle(s) ----- */
+
 /* ----- Begin: Define for Tracalyzer ----- */
 #if ( configUSE_TRACE_FACILITY == 1 )
-traceString str;
+    traceString str;
 #endif
-
 /* ----- End: Define for Tracalyzer ----- */
 
 int main(void) {
     prvSetupHardware(); /*  Configure hardware */
 
-#if ( configUSE_TRACE_FACILITY == 1 )
-    vTraceEnable(TRC_START); // Initialize and start recording
-    str = xTraceRegisterString("Channel");
-#endif
+    #if ( configUSE_TRACE_FACILITY == 1 )
+        vTraceEnable(TRC_START); // Initialize and start recording
+        str = xTraceRegisterString("Channel");
+    #endif
+    
+    QBTN1Status = xQueueCreate(1, sizeof ( int)); // make a queue
+    if (QBTN1Status == NULL)
+    {
+        for(;;)
+        {
+            #if ( configUSE_TRACE_FACILITY == 1 )
+                vTracePrint(str, "QBTN1Status Error creating!");
+            #endif
+        }
+    }
 
     LEDC_Semaphore = xSemaphoreCreateBinary(); // Create a Binary Semaphore type
     if (LEDC_Semaphore != NULL) // was it created successfully?
     {
-#if ( configUSE_TRACE_FACILITY == 1 )
-        vTracePrint(str, "LEDC_Semaphore created successfully!");
-#endif
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "LEDC_Semaphore created successfully!");
+        #endif
         /* Create the tasks then start the scheduler. */
         xTaskCreate(ToggleLEDB_Task, "ToggleLEDB_Task", configMINIMAL_STACK_SIZE,
                 NULL, tskIDLE_PRIORITY + 2, NULL);
-#if ( configUSE_TRACE_FACILITY == 1 )
-        vTracePrint(str, "ToggleLEDB_Task Created!");
-#endif
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "ToggleLEDB_Task Created!");
+        #endif
 
         xTaskCreate(LEDCHandler_Task, "LEDCHandler_Task", configMINIMAL_STACK_SIZE,
                 NULL, tskIDLE_PRIORITY + 1, NULL);
-#if ( configUSE_TRACE_FACILITY == 1 )
-        vTracePrint(str, "LEDCHandler_Task Created!");
-#endif
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "LEDCHandler_Task Created!");
+        #endif
 
         vTaskStartScheduler(); /*  Finally start the scheduler. */
     }
@@ -93,7 +105,7 @@ int main(void) {
  * PARAMETER 1:     void pointer - data of unspecified data type sent from
  *                  RTOS scheduler
  * RETURN VALUE:    None (There is no returning from this function)
- * NOTES:           LEDB will turn on or off
+ * NOTES:           LEDB will toggle every ms
  * END DESCRIPTION ************************************************************/
 static void ToggleLEDB_Task(void *pvParameters) {
     // local task variables
@@ -114,6 +126,15 @@ static void ToggleLEDB_Task(void *pvParameters) {
     }
 } /* End of ToggleLEDB_Task */
 
+/* LEDCHandler_Task Function Description ****************************************
+ * SYNTAX:          static void LEDCHandler_Task( void *pvParameters );
+ * KEYWORDS:        RTOS, Task
+ * DESCRIPTION:     Toggle LEDC in response to BTN1
+ * PARAMETER 1:     void pointer - data of unspecified data type sent from
+ *                  RTOS scheduler
+ * RETURN VALUE:    None (There is no returning from this function)
+ * NOTES:           Will block waiting for a semaphore in order to protect LEDC
+ * END DESCRIPTION ************************************************************/
 static void LEDCHandler_Task(void *pvParameters) {
     /* As per most tasks, this task is implemented within an infinite loop.
      * Take the semaphore once to start with so the semaphore is empty before 
@@ -122,39 +143,50 @@ static void LEDCHandler_Task(void *pvParameters) {
     xSemaphoreTake(LEDC_Semaphore, 0);
     for (;;) {
         /* Attempt to get a semaphore. Will block until we get one. */
-#if ( configUSE_TRACE_FACILITY == 1 )
-        vTracePrint(str, "LEDCHandler_Task requesting LEDC_SEMAPHORE");
-#endif
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "LEDCHandler_Task requesting LEDC_SEMAPHORE");
+        #endif
         xSemaphoreTake(LEDC_Semaphore, portMAX_DELAY);
 
         /* To get here we must have received a semaphore */
-#if ( configUSE_TRACE_FACILITY == 1 )
-        vTracePrint(str, "LEDCHandler_Task received LEDC_Semaphore");
-#endif
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "LEDCHandler_Task received LEDC_Semaphore");
+        #endif
 
-#if ( HOME_PRO_MX7_BOARD == 1 )
-        LATGINV = LED3; /* Toggle LED1: by default it is off */
-#else
-        LATBINV = LEDC; /* Toggle LEDC: by default it is off */
-#endif
-#if ( configUSE_TRACE_FACILITY == 1 )
-        vTracePrint(str, "LEDC Toggled");
-#endif
+        #if ( HOME_PRO_MX7_BOARD == 1 )
+            LATGINV = LED3; /* Toggle LED1: by default it is off */
+        #else
+            LATBINV = LEDC; /* Toggle LEDC: by default it is off */
+        #endif
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "LEDC Toggled");
+        #endif
     }
-}
+} /* End of LEDCHandler_Task */
 
+/* vLEDC_ISR_Handler Function Description ****************************************
+ * SYNTAX:          static void vLEDC_ISR_Handler( void *pvParameters );
+ * KEYWORDS:        C, ISR  Func
+ * DESCRIPTION:     ISR Function called from ISR Assembly  Wrapper
+ * PARAMETER 1:     void
+ * RETURN VALUE:    None (There is no returning from this function)
+ * NOTES:           ISR C Code for Assembly Wrapper
+ * END DESCRIPTION ************************************************************/
 void vLEDC_ISR_Handler(void) {
     mCNIntEnable(0); // disable CN interrupts at beginning
-#if ( HOME_PRO_MX7_BOARD == 1 )
-    LATGSET = LED4; // set the LED4 since we entered the ISR
-#else
-    LATBSET = LEDD; // set the LEDD since we entered the ISR
-#endif
-#if ( configUSE_TRACE_FACILITY == 1 )
-    vTracePrint(str, "LEDD on from ISR");
-#endif
+    #if ( HOME_PRO_MX7_BOARD == 1 )
+        LATGSET = LED4; // set the LED4 since we entered the ISR
+    #else
+        LATBSET = LEDD; // set the LEDD since we entered the ISR
+    #endif
+    #if ( configUSE_TRACE_FACILITY == 1 )
+        vTracePrint(str, "LEDD on from ISR");
+    #endif
+    int SValue = 1;
     hw_msDelay(20); // 20 ms button debounce
     while (PORTReadBits(IOPORT_G, BTN1)); // poll button 1 on
+    portBASE_TYPE xHigherPriorityTaskWoken = NULL;
+    portBASE_TYPE QBTN1Status = xQueueSendToBackFromISR(QBTN1Status, &SValue, &xHigherPriorityTaskWoken); //  Send BTN1 status to queue
     hw_msDelay(20); // 20 ms button debounce
     portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
     /* Let's give a semaphore to unblock LEDCHandler_Task*/
@@ -171,30 +203,30 @@ void vLEDC_ISR_Handler(void) {
      * portEND_SWITCHING_ISR() macro is provided as part of
      * the PIC32 port layer for this purpose.  taskYIELD() must never be 
      * called from an ISR! */
-#if ( HOME_PRO_MX7_BOARD == 1 )
-    LATGCLR = LED4; // unset the LED4 since we are exiting the ISR
-#else
-    LATBCLR = LEDD; // unset the LEDD since we are exiting the ISR
-#endif
-#if ( configUSE_TRACE_FACILITY == 1 )
-    vTracePrint(str, "LEDD off from  ISR");
-#endif
+    #if ( HOME_PRO_MX7_BOARD == 1 )
+        LATGCLR = LED4; // unset the LED4 since we are exiting the ISR
+    #else
+        LATBCLR = LEDD; // unset the LEDD since we are exiting the ISR
+    #endif
+    #if ( configUSE_TRACE_FACILITY == 1 )
+        vTracePrint(str, "LEDD off from  ISR");
+    #endif
     mCNIntEnable(1); // Enable CN interrupts at end
     portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
-}
+} /* End of vLEDC_ISR_Handler */
 
 static void prvSetupHardware(void) {
     Cerebot_mx7cK_setup();
 
-#if ( HOME_PRO_MX7_BOARD == 1 )
-    /* Set up PRO  MX7 LEDs */
-    PORTSetPinsDigitalOut(IOPORT_G, BRD_LEDS);
-    LATGCLR = BRD_LEDS; /* Clear all BRD_LEDS bits */
-#else
-    /* Set up PmodSTEM LEDs */
-    PORTSetPinsDigitalOut(IOPORT_B, SM_LEDS);
-    LATBCLR = SM_LEDS; /* Clear all SM LED bits */
-#endif
+    #if ( HOME_PRO_MX7_BOARD == 1 )
+        /* Set up PRO  MX7 LEDs */
+        PORTSetPinsDigitalOut(IOPORT_G, BRD_LEDS);
+        LATGCLR = BRD_LEDS; /* Clear all BRD_LEDS bits */
+    #else
+        /* Set up PmodSTEM LEDs */
+        PORTSetPinsDigitalOut(IOPORT_B, SM_LEDS);
+        LATBCLR = SM_LEDS; /* Clear all SM LED bits */
+    #endif
 
     /* ----- BEGIN: CN Interrupts ----- */
     unsigned int dummy; // used to hold PORT read value
@@ -245,21 +277,28 @@ void vApplicationIdleHook(void) {
     important that vApplicationIdleHook() is permitted to return to its calling
     function, because it is the responsibility of the idle task to clean up
     memory allocated by the kernel to any task that has since been deleted. */
-
-    /* Begin: Button Bounce Trap */
-    while (!PORTReadBits(IOPORT_G, BTN1)); // poll button 1 off
-#if ( HOME_PRO_MX7_BOARD == 1 )
-    LATGINV = LED1; // toggle  LED1
-#else
-    LATBINV = LEDA; // toggle LEDA
-#endif
-#if ( configUSE_TRACE_FACILITY == 1 )
-    vTracePrint(str, "LEDA Toggled");
-#endif
-    hw_msDelay(20); // 20 ms button debounce
-    while (PORTReadBits(IOPORT_G, BTN1)); // poll button 1 on
-    hw_msDelay(20); // 20 ms button debounce
-    /* End: Button Bounce Trap */
+    
+    int RValue = 0;
+    portBASE_TYPE QBTN1Status = xQueueReceive(QBTN1Status, &RValue, 0); // receive from queue don't block
+    if (QBTN1Status != pdFAIL) // we got something
+    {
+        if (RValue  != 0)
+        {
+            #if ( HOME_PRO_MX7_BOARD == 1 )
+                LATGINV = LED1; // toggle  LED1
+            #else
+                LATBINV = LEDA; // toggle LEDA
+            #endif
+            #if ( configUSE_TRACE_FACILITY == 1 )
+                vTracePrint(str, "LEDA Toggled");
+            #endif
+        }
+    }
+    else
+    {
+        RValue = 0;
+    }
+    
 }
 
 /*-----------------------------------------------------------*/
