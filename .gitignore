@@ -12,4 +12,6 @@
 latex/
 *.o
 *.d
-*.o
+*.elf
+*.hex
+*.map

@@ -65,9 +65,16 @@ int main(void) {
 #endif
         /* Create the tasks then start the scheduler. */
         xTaskCreate(ToggleLEDB_Task, "ToggleLEDB_Task", configMINIMAL_STACK_SIZE,
-                NULL, tskIDLE_PRIORITY + 1, NULL);
-        xTaskCreate(LEDCHandler_Task, "LEDCHandler_Task", configMINIMAL_STACK_SIZE,
                 NULL, tskIDLE_PRIORITY + 2, NULL);
+#if ( configUSE_TRACE_FACILITY == 1 )
+        vTracePrint(str, "ToggleLEDB_Task Created!");
+#endif
+
+        xTaskCreate(LEDCHandler_Task, "LEDCHandler_Task", configMINIMAL_STACK_SIZE,
+                NULL, tskIDLE_PRIORITY + 1, NULL);
+#if ( configUSE_TRACE_FACILITY == 1 )
+        vTracePrint(str, "LEDCHandler_Task Created!");
+#endif
 
         vTaskStartScheduler(); /*  Finally start the scheduler. */
     }
@@ -101,11 +108,11 @@ static void ToggleLEDB_Task(void *pvParameters) {
 #endif
 
 #if ( configUSE_TRACE_FACILITY == 1 )
-        vTracePrint(str, "LEDB set on");
+        vTracePrint(str, "LEDB Toggled");
 #endif
         vTaskDelayUntil(&xLastWakeTick, pdMS_TO_TICKS(1)); // delay for 1 ms	
     }
-} /* End of prvTestTask1 */
+} /* End of ToggleLEDB_Task */
 
 static void LEDCHandler_Task(void *pvParameters) {
     /* As per most tasks, this task is implemented within an infinite loop.
@@ -137,18 +144,19 @@ static void LEDCHandler_Task(void *pvParameters) {
 }
 
 void vLEDC_ISR_Handler(void) {
+    mCNIntEnable(0); // disable CN interrupts at beginning
 #if ( HOME_PRO_MX7_BOARD == 1 )
     LATGSET = LED4; // set the LED4 since we entered the ISR
 #else
     LATBSET = LEDD; // set the LEDD since we entered the ISR
 #endif
 #if ( configUSE_TRACE_FACILITY == 1 )
-    vTracePrint(str, "LEDD set");
+    vTracePrint(str, "LEDD on from ISR");
 #endif
     hw_msDelay(20); // 20 ms button debounce
     while (PORTReadBits(IOPORT_G, BTN1)); // poll button 1 on
     hw_msDelay(20); // 20 ms button debounce
-    portBASE_TYPE xHigherPriorityTaskWoken = pdTRUE; // read more on this..
+    portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
     /* Let's give a semaphore to unblock LEDCHandler_Task*/
     xSemaphoreGiveFromISR(LEDC_Semaphore, &xHigherPriorityTaskWoken);
 
@@ -169,8 +177,9 @@ void vLEDC_ISR_Handler(void) {
     LATBCLR = LEDD; // unset the LEDD since we are exiting the ISR
 #endif
 #if ( configUSE_TRACE_FACILITY == 1 )
-    vTracePrint(str, "LEDD unset");
+    vTracePrint(str, "LEDD off from  ISR");
 #endif
+    mCNIntEnable(1); // Enable CN interrupts at end
     portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
 }
 
@@ -223,6 +232,7 @@ void vApplicationMallocFailedHook(void) {
     taskDISABLE_INTERRUPTS();
     for (;;);
 }
+
 /*-----------------------------------------------------------*/
 
 void vApplicationIdleHook(void) {
@@ -242,6 +252,9 @@ void vApplicationIdleHook(void) {
     LATGINV = LED1; // toggle  LED1
 #else
     LATBINV = LEDA; // toggle LEDA
+#endif
+#if ( configUSE_TRACE_FACILITY == 1 )
+    vTracePrint(str, "LEDA Toggled");
 #endif
     hw_msDelay(20); // 20 ms button debounce
     while (PORTReadBits(IOPORT_G, BTN1)); // poll button 1 on
