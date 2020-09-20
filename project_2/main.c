@@ -3,7 +3,8 @@
  * @brief Project 2: Multitasking +  CNI + Semaphores
  *
  * @par       
- * Demonstrates the use of FreeRTOS, Doxygen, Git, and Tracealyzer
+ * This projects goal is to explore running multiple tasks. Each task has
+ * different requirements and thus will need different priorities.
  *
  * @author
  * Carlos Santos
@@ -21,7 +22,7 @@
 #include "CerebotMX7cK.h"
 
 /* Carlos Home board development set if at home */
-#define HOME_PRO_MX7_BOARD 1
+#define HOME_PRO_MX7_BOARD 0
 /*-----------------------------------------------------------*/
 
 
@@ -98,7 +99,7 @@ int main(void) {
     return 0;
 } /* End of main */
 
-/* ToggleLEDB_Task Function Description ****************************************
+/** ToggleLEDB_Task Function Description ***************************************
  * SYNTAX:          static void ToggleLEDB_Task( void *pvParameters );
  * KEYWORDS:        RTOS, Task
  * DESCRIPTION:     Toggle LEDB on/off every millisecond
@@ -186,9 +187,9 @@ void vLEDC_ISR_Handler(void) {
     hw_msDelay(20); // 20 ms button debounce
     while (PORTReadBits(IOPORT_G, BTN1)); // poll button 1 on
     portBASE_TYPE xHigherPriorityTaskWoken = NULL;
-    portBASE_TYPE QBTN1Status = xQueueSendToBackFromISR(QBTN1Status, &SValue, &xHigherPriorityTaskWoken); //  Send BTN1 status to queue
+    portBASE_TYPE QStatus = xQueueSendToBackFromISR(QBTN1Status, &SValue, &xHigherPriorityTaskWoken); //  Send BTN1 status to queue
     hw_msDelay(20); // 20 ms button debounce
-    portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+    xHigherPriorityTaskWoken = pdFALSE;
     /* Let's give a semaphore to unblock LEDCHandler_Task*/
     xSemaphoreGiveFromISR(LEDC_Semaphore, &xHigherPriorityTaskWoken);
 
@@ -279,8 +280,8 @@ void vApplicationIdleHook(void) {
     memory allocated by the kernel to any task that has since been deleted. */
     
     int RValue = 0;
-    portBASE_TYPE QBTN1Status = xQueueReceive(QBTN1Status, &RValue, 0); // receive from queue don't block
-    if (QBTN1Status != pdFAIL) // we got something
+    portBASE_TYPE QStatus = xQueueReceive(QBTN1Status, &RValue, 0); // receive from queue don't block
+    if (QStatus != pdFAIL) // we got something
     {
         if (RValue  != 0)
         {
