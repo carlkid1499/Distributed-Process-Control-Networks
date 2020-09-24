@@ -11,102 +11,59 @@
  * 07 SEP 2020
  */
 
-
-/*
- * FreeRTOS Kernel V10.3.1
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
- * subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * http://www.FreeRTOS.org
- * http://aws.amazon.com/freertos
- *
- * 1 tab == 4 spaces!
- */
-
-/******************************************************************************
- * This project provides two demo applications.  A simple blinky style project,
- * and a more comprehensive test and demo application.  The
- * mainCREATE_SIMPLE_BLINKY_DEMO_ONLY setting (defined in this file) is used to
- * select between the two.  The simply blinky demo is implemented and described
- * in main_blinky.c.  The more comprehensive test and demo application is
- * implemented and described in main_full.c.
- *
- * This file implements the code that is not demo specific, including the
- * hardware setup and FreeRTOS hook functions.
- */
-
-/* Kernel includes. */
+/* Includes. */
 #include "FreeRTOS.h"
 #include "task.h"
-
 #include <plib.h>
 #include "CerebotMX7cK.h"
 #include "comm.h"
+#include <stdio.h>
+#include <string.h>
+#include "queue.h"
+#include "I2C.h"
 
-
-/*-----------------------------------------------------------*/
-
-/*
- * Set up the hardware ready to run this demo.
- */
+/* Carlos Home board development set if at home */
+#define HOME_PRO_MX7_BOARD 1
+/* ----- Hardware Setup ----- */
 static void prvSetupHardware( void );
 
+/* ----- Tasks ----- */
+static void UART_TASK (void *pvParameters);
+static void EEPROM_TASK(void *pvParameters);
+/* Queue Handles */
+QueueHandle_t UART_Q;
 
-/* Simple Tasks that light a specific LED when running  */
-static void prvTestTask1( void *pvParameters );
-static void prvTestTask2( void *pvParameters );
-
-
-    
 #if ( configUSE_TRACE_FACILITY == 1 )
     traceString str;
 #endif
 
-/* main Function Description ***************************************
- * SYNTAX:		int main( void );
- * KEYWORDS:		Initialize, create, tasks, scheduler
- * DESCRIPTION:         This is a typical RTOS set up function. Hardware is
- * 			initialized, tasks are created, and the scheduler is
- * 			started.
- * PARAMETERS:		None
- * RETURN VALUE:	Exit code - used for error handling
- * NOTES:		All three buttons are polled using the same code
- *                      for reading the buttons.
- * END DESCRIPTION *****************************************************/
 int main( void )
 {
-    prvSetupHardware();		/*  Configure hardware */
+    /*  Configure hardware */
+    prvSetupHardware();
     
     #if ( configUSE_TRACE_FACILITY == 1 )
         vTraceEnable(TRC_START); // Initialize and start recording
         str = xTraceRegisterString("Channel");
     #endif
-
-
+    
+    /* Lets make a queue for the UART */  
+    UART_Q = xQueueCreate(1, sizeof(char *));
+    if (UART_Q == NULL)
+    {
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "Error creating! UART_Q!");
+        #endif
+        for(;;);
+    }
     
 /* Create the tasks then start the scheduler. */
 
     /* Create the tasks defined within this file. */
-    xTaskCreate( prvTestTask1, "Tst1", configMINIMAL_STACK_SIZE,
-                                    NULL, tskIDLE_PRIORITY, NULL );
-    xTaskCreate( prvTestTask2, "Tst2", configMINIMAL_STACK_SIZE,
-                                    NULL, tskIDLE_PRIORITY, NULL );
+    xTaskCreate( UART_TASK, "UART_TASK", configMINIMAL_STACK_SIZE,
+                                    NULL, tskIDLE_PRIORITY+1, NULL );
+    xTaskCreate( EEPROM_TASK, "EEPROM_TASK", configMINIMAL_STACK_SIZE,
+                                    NULL, tskIDLE_PRIORITY+1, NULL );
 
     vTaskStartScheduler();	/*  Finally start the scheduler. */
 
@@ -115,73 +72,88 @@ int main( void )
     return 0;
 }  /* End of main */
 
-/* prvTestTask1 Function Description *****************************************
- * SYNTAX:          static void prvTestTask1( void *pvParameters );
- * KEYWORDS:        RTOS, Task
- * DESCRIPTION:     If LEDA is not lit, all LEDs are turned off and LEDA is
- *                  turned on. Increments a counter each time the task is
- *                  resumed.
- * PARAMETER 1:     void pointer - data of unspecified data type sent from
- *                  RTOS scheduler
- * RETURN VALUE:    None (There is no returning from this function)
- * NOTES:           LEDA is switched on and LEDB switched off if LEDA was
- *                  detected as off.
- * END DESCRIPTION ************************************************************/
-static void prvTestTask1( void *pvParameters )
-{
-unsigned int counter = 0;
-
+static void UART_TASK (void *pvParameters)
+{     
+    // Local Variables
+    char str_buf[81];
+    
     for( ;; )
     {
-	if(!(LATB & LEDA))      /* Test for LEDA off */
-	{
-            LATBCLR = SM_LEDS;  /* Turn off all other LEDs */
-            LATBSET = LEDA;     /* Turn LEDA on */
-            #if ( configUSE_TRACE_FACILITY == 1 )
-                vTracePrint(str, "LEDA set on");
-            #endif
-            ++counter;          /* Increment task run counter */
-	}
-    }
-}  /* End of prvTestTask1 */
+        /* According to the comm.c getstrU1 doesn't block if no characters available */
+        while(!getstrU1(str_buf, sizeof(str_buf))); // grab a string from terminal
+        // echo the message back
+        putsU1("<<<<<..... Sending message to EEPROM .....>>>>>");          
+        putsU1(str_buf);
+        putsU1("<<<<<..... .....>>>>>");
+        putsU1("\n");
+        
+        
+        // Turn off LEDA, we've got a message to send
+        #if ( HOME_PRO_MX7_BOARD == 1 )
+            LATGCLR = LED1;
+        #else
+            LATBCLR = LEDA;
+        #endif
 
-/* prvTestTask2 Function Description *****************************************
- * SYNTAX:          static void prvTestTask2( void *pvParameters );
- * KEYWORDS:        RTOS, Task
- * DESCRIPTION:     If LEDB is not lit, all LEDs are turned off and LEDB is
- *                  turned on. Increments a counter each time the task is
- *                  resumed.
- * PARAMETER 1:     void pointer - data of unspecified data type sent from
- *                  RTOS scheduler
- * RETURN VALUE:    None (There is no returning from this function)
- * NOTES:           LEDB is switched on and LEDA switched off if LEDB was
- *                  detected as off.
- * END DESCRIPTION ************************************************************/
-static void prvTestTask2( void *pvParameters )
-{
-unsigned int counter = 0;
-    for( ;; )
-    {
-	if(!(LATB & LEDB))      /* Test for LEDB off */
-	{
-            LATBCLR = SM_LEDS;  /* Turn off all other LEDs */
-            LATBSET = LEDB;     /* Turn LEDB on */
+        /* Let's send it to the UART_Q*/
+        portBASE_TYPE UART_Q_Status = xQueueSendToBack(UART_Q, &str_buf, 0);
+        if(UART_Q_Status != pdPASS)
+        {
             #if ( configUSE_TRACE_FACILITY == 1 )
-                vTracePrint(str, "LEDB set on");
+                vTracePrint(str, "UART_Q is full");
             #endif
-            ++counter;          /* Increment task run counter */
-	}
+        }
+        
+        // Let's delay to make sure our data gets copied over.
+        vTaskDelay(pdMS_TO_TICKS(1)); // delay for 1 ms
     }
-}  /* End of prvTestTask2 */
+}
+
+static void EEPROM_TASK (void *pvParameters)
+{
+    // this needs a bit of work.
+    // Local Variables
+    char msg_to_store;
+    
+    for(;;)
+    {
+        portBASE_TYPE UART_Q_Status = xQueueReceive(UART_Q, &msg_to_store,0);
+        if(UART_Q_Status != pdFAIL) //we must have gotten something
+        {
+            // Send to EEPROM
+            putsU1(msg_to_store);
+            EEPROM_WRITE(0x0,&msg_to_store, 81);
+            EEPROM_POLL(); // poll  EEPROM for completion
+            #if ( HOME_PRO_MX7_BOARD == 1 )
+                LATGSET = LED1;
+            #else
+                LATBSET = LEDA;
+            #endif
+        }
+        else
+        {
+            // we got any error
+        }
+    }
+}
 
 static void prvSetupHardware( void )
 {
     Cerebot_mx7cK_setup();
+    initialize_uart1(19200, 1); // 19200 Baud rate and odd parity
+    INIT_EEPROM(); // initialize I2C resources
     
-    /* Set up PmodSTEM LEDs */
-    PORTSetPinsDigitalOut(IOPORT_B, SM_LEDS);
-    LATBCLR = SM_LEDS;                      /* Clear all SM LED bits */
-    LATBSET = LEDA;                         /* Turn on LEDA */
+    #if ( HOME_PRO_MX7_BOARD == 1 )
+        /* Set up PRO  MX7 LEDs */
+        PORTSetPinsDigitalOut(IOPORT_G, BRD_LEDS);
+        LATGCLR = BRD_LEDS; /* Clear all BRD_LEDS bits */
+        LATGSET = LED1; /* turn on LED1 */
+    #else
+        /* Set up PmodSTEM LEDs */
+        PORTSetPinsDigitalOut(IOPORT_B, SM_LEDS);
+        LATBCLR = SM_LEDS; /* Clear all SM LED bits */
+        LATBSET = LEDA;
+    #endif
     
 /* Enable multi-vector interrupts */
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);  /* Do only once */
