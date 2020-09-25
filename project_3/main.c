@@ -28,8 +28,12 @@
 static void prvSetupHardware( void );
 
 /* ----- Tasks ----- */
-static void UART_TASK (void *pvParameters);
 static void EEPROM_TASK(void *pvParameters);
+
+/* ----- UART ISR ----- */
+void vUART_ISR_Handler(void);
+void __attribute__((interrupt(IPL2), vector(_UART_1_VECTOR))) vUART_ISR_Wrapper(void);
+
 /* Queue Handles */
 QueueHandle_t UART_Q;
 
@@ -60,10 +64,10 @@ int main( void )
 /* Create the tasks then start the scheduler. */
 
     /* Create the tasks defined within this file. */
-    xTaskCreate( UART_TASK, "UART_TASK", configMINIMAL_STACK_SIZE,
-                                    NULL, tskIDLE_PRIORITY+1, NULL );
-    xTaskCreate( EEPROM_TASK, "EEPROM_TASK", configMINIMAL_STACK_SIZE,
-                                    NULL, tskIDLE_PRIORITY+1, NULL );
+    /*xTaskCreate( UART_TASK, "UART_TASK", configMINIMAL_STACK_SIZE,
+                                    NULL, tskIDLE_PRIORITY+1, NULL ); */
+   /* xTaskCreate( EEPROM_TASK, "EEPROM_TASK", configMINIMAL_STACK_SIZE,
+                                    NULL, tskIDLE_PRIORITY+1, NULL ); */
 
     vTaskStartScheduler();	/*  Finally start the scheduler. */
 
@@ -72,14 +76,31 @@ int main( void )
     return 0;
 }  /* End of main */
 
-static void UART_TASK (void *pvParameters)
+void vUART_ISR_Handler(void)
+{
+    // local variables
+    char buf;
+    
+    getcU1(&buf); // grab a char from terminal       
+    putcU1(buf); // echo the character back 
+    if (buf == '\r') // did we get a return?
+    {
+        char message[] = "Sending message to EEPROM!...\n";
+        putsU1(message);
+    }
+  
+    // Clear the RX interrupt Flag
+    INTClearFlag(INT_SOURCE_UART_RX(UART1));
+}
+
+/* static void UART_TASK (void *pvParameters)
 {     
     // Local Variables
     char str_buf[81];
     
     for( ;; )
     {
-        /* According to the comm.c getstrU1 doesn't block if no characters available */
+        // According to the comm.c getstrU1 doesn't block if no characters available
         while(!getstrU1(str_buf, sizeof(str_buf))); // grab a string from terminal
         // echo the message back
         putsU1("<<<<<..... Sending message to EEPROM .....>>>>>");          
@@ -95,7 +116,7 @@ static void UART_TASK (void *pvParameters)
             LATBCLR = LEDA;
         #endif
 
-        /* Let's send it to the UART_Q*/
+        // Let's send it to the UART_Q 
         portBASE_TYPE UART_Q_Status = xQueueSendToBack(UART_Q, &str_buf, 0);
         if(UART_Q_Status != pdPASS)
         {
@@ -107,7 +128,7 @@ static void UART_TASK (void *pvParameters)
         // Let's delay to make sure our data gets copied over.
         vTaskDelay(pdMS_TO_TICKS(1)); // delay for 1 ms
     }
-}
+} */
 
 static void EEPROM_TASK (void *pvParameters)
 {
@@ -121,7 +142,7 @@ static void EEPROM_TASK (void *pvParameters)
         if(UART_Q_Status != pdFAIL) //we must have gotten something
         {
             // Send to EEPROM
-            putsU1(msg_to_store);
+            //putsU1(msg_to_store);
             EEPROM_WRITE(0x0,&msg_to_store, 81);
             EEPROM_POLL(); // poll  EEPROM for completion
             #if ( HOME_PRO_MX7_BOARD == 1 )
@@ -143,6 +164,16 @@ static void prvSetupHardware( void )
     initialize_uart1(19200, 1); // 19200 Baud rate and odd parity
     INIT_EEPROM(); // initialize I2C resources
     
+    /* ----- Enable UART Interrupts ----- */
+    UARTSetFifoMode(UART1, UART_INTERRUPT_ON_RX_NOT_EMPTY); // Turn on receive RX interrupt
+    // Configure UART2 RX Interrupt
+    INTEnable(INT_SOURCE_UART_RX(UART1), INT_ENABLED);
+    INTSetVectorPriority(INT_VECTOR_UART(UART1), INT_PRIORITY_LEVEL_1);
+    INTSetVectorSubPriority(INT_VECTOR_UART(UART1), INT_SUB_PRIORITY_LEVEL_0);
+    /* ----- ------ ----- ----- ----- --- */
+
+    
+
     #if ( HOME_PRO_MX7_BOARD == 1 )
         /* Set up PRO  MX7 LEDs */
         PORTSetPinsDigitalOut(IOPORT_G, BRD_LEDS);
@@ -155,10 +186,9 @@ static void prvSetupHardware( void )
         LATBSET = LEDA;
     #endif
     
-/* Enable multi-vector interrupts */
+    /* Enable multi-vector interrupts */
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);  /* Do only once */
     INTEnableInterrupts();   /*Do as needed for global interrupt control */
-    portDISABLE_INTERRUPTS();
     
 //	/* Configure the hardware for maximum performance. */
 //	vHardwareConfigurePerformance();
