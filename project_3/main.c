@@ -21,6 +21,7 @@
 #include <string.h>
 #include "queue.h"
 #include "I2C.h"
+#include "semphr.h"
 
 /* Carlos Home board development set if at home */
 #define HOME_PRO_MX7_BOARD 1
@@ -28,11 +29,14 @@
 static void prvSetupHardware( void );
 
 /* ----- Tasks ----- */
-static void EEPROM_TASK(void *pvParameters);
+static void EEPROM_Task(void *pvParameters);
 
 /* ----- UART ISR ----- */
 void vUART_ISR_Handler(void);
 void __attribute__((interrupt(IPL2), vector(_UART_1_VECTOR))) vUART_ISR_Wrapper(void);
+
+/* Semaphore Handles */
+SemaphoreHandle_t EEPROM_Semaphore;
 
 /* Queue Handles */
 QueueHandle_t UART_Q;
@@ -51,8 +55,8 @@ int main( void )
         str = xTraceRegisterString("Channel");
     #endif
     
-    /* Lets make a queue for the UART */  
-    UART_Q = xQueueCreate(1, sizeof(char *));
+    /* Lets make a queue for the UART 80 max plus \r */  
+    UART_Q = xQueueCreate(81, sizeof(char));
     if (UART_Q == NULL)
     {
         #if ( configUSE_TRACE_FACILITY == 1 )
@@ -61,13 +65,21 @@ int main( void )
         for(;;);
     }
     
+    EEPROM_Semaphore = xSemaphoreCreateBinary(); // create that semaphore
+    if(EEPROM_Semaphore == NULL)
+    {
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "Error creating! EEPROM_SEMAPHORE!");
+        #endif
+        for(;;);
+    }
+    
+    
 /* Create the tasks then start the scheduler. */
 
     /* Create the tasks defined within this file. */
-    /*xTaskCreate( UART_TASK, "UART_TASK", configMINIMAL_STACK_SIZE,
-                                    NULL, tskIDLE_PRIORITY+1, NULL ); */
-   /* xTaskCreate( EEPROM_TASK, "EEPROM_TASK", configMINIMAL_STACK_SIZE,
-                                    NULL, tskIDLE_PRIORITY+1, NULL ); */
+    xTaskCreate( EEPROM_Task, "EEPROM_Task", configMINIMAL_STACK_SIZE,
+                                    NULL, tskIDLE_PRIORITY+1, NULL );
 
     vTaskStartScheduler();	/*  Finally start the scheduler. */
 
@@ -80,35 +92,26 @@ void vUART_ISR_Handler(void)
 {
     // local variables
     char buf;
+    portBASE_TYPE xHigherPriorityTaskWoken = NULL;
     
     getcU1(&buf); // grab a char from terminal       
-    putcU1(buf); // echo the character back 
+    putcU1(buf); // echo the character back
+    // Let's send it to the UART_Q 
+    portBASE_TYPE UART_Q_Status = xQueueSendToBackFromISR(UART_Q, &buf, 0);
+    if(UART_Q_Status != pdPASS)
+    {
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "UART_Q is full");
+        #endif
+    }
+    
+    // Clear the RX interrupt Flag
+    INTClearFlag(INT_SOURCE_UART_RX(UART1));
+    
     if (buf == '\r') // did we get a return?
     {
         char message[] = "Sending message to EEPROM!...\n";
         putsU1(message);
-    }
-  
-    // Clear the RX interrupt Flag
-    INTClearFlag(INT_SOURCE_UART_RX(UART1));
-}
-
-/* static void UART_TASK (void *pvParameters)
-{     
-    // Local Variables
-    char str_buf[81];
-    
-    for( ;; )
-    {
-        // According to the comm.c getstrU1 doesn't block if no characters available
-        while(!getstrU1(str_buf, sizeof(str_buf))); // grab a string from terminal
-        // echo the message back
-        putsU1("<<<<<..... Sending message to EEPROM .....>>>>>");          
-        putsU1(str_buf);
-        putsU1("<<<<<..... .....>>>>>");
-        putsU1("\n");
-        
-        
         // Turn off LEDA, we've got a message to send
         #if ( HOME_PRO_MX7_BOARD == 1 )
             LATGCLR = LED1;
@@ -116,45 +119,58 @@ void vUART_ISR_Handler(void)
             LATBCLR = LEDA;
         #endif
 
-        // Let's send it to the UART_Q 
-        portBASE_TYPE UART_Q_Status = xQueueSendToBack(UART_Q, &str_buf, 0);
-        if(UART_Q_Status != pdPASS)
-        {
-            #if ( configUSE_TRACE_FACILITY == 1 )
-                vTracePrint(str, "UART_Q is full");
-            #endif
-        }
-        
-        // Let's delay to make sure our data gets copied over.
-        vTaskDelay(pdMS_TO_TICKS(1)); // delay for 1 ms
+        /* Let's give a semaphore to unblock LEDCHandler_Task*/
+        xSemaphoreGiveFromISR(EEPROM_Semaphore, &xHigherPriorityTaskWoken);
     }
-} */
+    portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+}
 
-static void EEPROM_TASK (void *pvParameters)
+static void EEPROM_Task (void *pvParameters)
 {
     // this needs a bit of work.
     // Local Variables
-    char msg_to_store;
+    char cbuf;
+    unsigned char SAddr = 0x00;
+    
+    /* As per most tasks, this task is implemented within an infinite loop.
+     * Take the semaphore once to start with so the semaphore is empty before 
+     * the infinite loop is entered.  The semaphore was created before the 
+     * scheduler was started so before this task ran for the first time.*/
+    xSemaphoreTake(EEPROM_Semaphore, 0);
     
     for(;;)
-    {
-        portBASE_TYPE UART_Q_Status = xQueueReceive(UART_Q, &msg_to_store,0);
-        if(UART_Q_Status != pdFAIL) //we must have gotten something
+    {   
+        /* Attempt to get a semaphore. Will block until we get one. */
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "EEPROM_Task requesting EEPROM_SEMAPHORE");
+        #endif
+        xSemaphoreTake(EEPROM_Semaphore, portMAX_DELAY);
+
+        /* To get here we must have received a semaphore */
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "EEPROM_Task received EEPROM_Semaphore");
+        #endif
+        
+        
+        portBASE_TYPE UART_Q_Status = xQueueReceive(UART_Q, &cbuf,0);
+        while((UART_Q_Status != pdFAIL) || (cbuf != '\r')) //we must have gotten something
         {
             // Send to EEPROM
-            //putsU1(msg_to_store);
-            EEPROM_WRITE(0x0,&msg_to_store, 81);
+            EEPROM_WRITE(SAddr,&cbuf, 0);
             EEPROM_POLL(); // poll  EEPROM for completion
-            #if ( HOME_PRO_MX7_BOARD == 1 )
-                LATGSET = LED1;
-            #else
-                LATBSET = LEDA;
-            #endif
+            SAddr = SAddr + 0x01; // increment address
+            // If next item is a 'r' loop stops
+            UART_Q_Status = xQueueReceive(UART_Q, &cbuf,0);
         }
-        else
-        {
-            // we got any error
-        }
+        // stopped here 9/24/2020
+        // Need a better way to store messages in  EEPROM
+        // I need to store the start and end addresses somewhere
+        // So the LCD task can read messages properly!
+        #if ( HOME_PRO_MX7_BOARD == 1 )
+            LATGSET = LED1;
+        #else
+            LATBSET = LEDA;
+        #endif
     }
 }
 
