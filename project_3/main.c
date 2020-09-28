@@ -24,7 +24,7 @@
 #include "semphr.h"
 
 /* Carlos Home board development set if at home */
-#define HOME_PRO_MX7_BOARD 0
+#define HOME_PRO_MX7_BOARD 1
 /* ----- Hardware Setup ----- */
 static void prvSetupHardware( void );
 
@@ -49,6 +49,12 @@ SemaphoreHandle_t LCD_Semaphore;
 /* Queue Handles */
 QueueHandle_t UART_Q;
 QueueHandle_t LCD_Q;
+
+/* Message Struct */
+struct AMessage {
+        int length;
+        int Start_Addr;
+    } xMessage;
 
 #if ( configUSE_TRACE_FACILITY == 1 )
     traceString str;
@@ -84,17 +90,8 @@ int main( void )
     ** Will store length of message and
     ** start address in a struct.
     */
-    struct Message {
-        int ID;
-        int length;
-        unsigned char Start_Addr;
-    };
-    
-    struct Message msg;
-    msg.length = 0;
-    msg.Start_Addr = 0;
-    
-    LCD_Q = xQueueCreate(10, sizeof(struct Message));
+
+    LCD_Q = xQueueCreate(10, sizeof(&xMessage));
 
     if (LCD_Q != NULL)
     {
@@ -109,7 +106,7 @@ int main( void )
         #endif
         for(;;);
     }
-    
+
     EEPROM_Semaphore = xSemaphoreCreateBinary(); // create that semaphore
     if(EEPROM_Semaphore == NULL)
     {
@@ -208,16 +205,8 @@ static void EEPROM_Task (void *pvParameters)
     // this needs a bit of work.
     // Local Variables
     char charbuf;
-    unsigned char SAddr = 0x00;
-    int message_ID = 1;
-    struct Message {
-        int ID;
-        int length;
-        unsigned char Start_Addr;
-    };
-    
-    struct Message msg;
-
+    int SAddr = 0x00;
+    struct AMessage *ptrxMessage;
     /* As per most tasks, this task is implemented within an infinite loop.
      * Take the semaphore once to start with so the semaphore is empty before 
      * the infinite loop is entered.  The semaphore was created before the 
@@ -245,44 +234,59 @@ static void EEPROM_Task (void *pvParameters)
             putcU1(charbuf);
             // by default we start at address 0x0
             EEPROM_WRITE(SAddr, &charbuf, 1);
+            EEPROM_POLL();
             message_length = message_length + 1;
             SAddr = SAddr + 1;
             UART_Q_Status = xQueueReceive(UART_Q, &charbuf,0);
         }
+        
+        //terminate message with a NULL
+        charbuf = NULL;
+        EEPROM_WRITE(SAddr, &charbuf, 1);
+        EEPROM_POLL();
+        SAddr = SAddr + 1;
+        
         putsU1("\n\r");
         // if we reach here message has been stored and UART should be ready to get another one
-        msg.ID = message_ID;
-        msg.length = message_length;
-        msg.Start_Addr = SAddr;
+        struct AMessage msg1;
+        msg1.length = message_length;
+        msg1.Start_Addr = SAddr - message_length;
         
+        ptrxMessage = &msg1;
+
         // Send message to the LCD queue.
-        portBASE_TYPE LCD_Q_Status = xQueueSendToBackFromISR(LCD_Q, &msg, 0);
+        portBASE_TYPE LCD_Q_Status = xQueueSendToBack(LCD_Q, &ptrxMessage, 0);
+        vTaskDelay(5); // wait for data to copy over
         if(LCD_Q_Status != pdPASS)
         {
             #if ( configUSE_TRACE_FACILITY == 1 )
                 vTracePrint(str, "LCD_Q is full");
             #endif
-            char message[] = "LCD_Q is full!";
-            putsU1(message);
+        }
+        else
+        {
+            #if ( HOME_PRO_MX7_BOARD == 1 )
+                LATGCLR = LED2;
+            #else
+                LATBCLR = LEDB;
+            #endif
         }
         
         // Adjust some local variables
         message_length = 0;
-        message_ID = message_ID + 1;
+        
+        // light LEDA we are ready for another message!
+        #if ( HOME_PRO_MX7_BOARD == 1 )
+            LATGSET = LED1; /* turn on LED1 */
+        #else
+            LATBSET = LEDA;
+        #endif
     }
 }
 
 static void LCD_Task(void *pvParameters)
 {
-    // this needs a bit of work.
-    // Local Variables
-    struct Message {
-        int ID;
-        int length;
-        unsigned char Start_Addr;
-    };
-    struct Message msg;
-
+    struct AMessage *ptrxMessage;
     /* As per most tasks, this task is implemented within an infinite loop.
      * Take the semaphore once to start with so the semaphore is empty before 
      * the infinite loop is entered.  The semaphore was created before the 
@@ -301,6 +305,32 @@ static void LCD_Task(void *pvParameters)
         #if ( configUSE_TRACE_FACILITY == 1 )
             vTracePrint(str, "LCD_Task received LCD_Semaphore");
         #endif
+
+        portBASE_TYPE LCD_Q_Status = xQueueReceive(LCD_Q, &(ptrxMessage),0);
+        vTaskDelay(5); // wait for data to copy over
+        if(LCD_Q_Status != pdFAIL)
+        {
+            #if ( HOME_PRO_MX7_BOARD == 1 )
+                LATGCLR = LED2;
+            #else
+                LATBCLR = LEDB;
+            #endif
+        }
+        else
+        {
+            #if ( HOME_PRO_MX7_BOARD == 1 )
+                LATGSET = LED2;
+            #else
+                LATBSET = LEDB;
+            #endif
+        }
+        int Address = ptrxMessage->Start_Addr;
+        int length = ptrxMessage->length;
+        char Rmsg[length];
+        // Issue reading the message back..
+        EEPROM_READ(Address, Rmsg, length);
+        EEPROM_POLL();
+        putsU1(Rmsg);
     }
 }
 
@@ -339,11 +369,13 @@ static void prvSetupHardware( void )
         PORTSetPinsDigitalOut(IOPORT_G, BRD_LEDS);
         LATGCLR = BRD_LEDS; /* Clear all BRD_LEDS bits */
         LATGSET = LED1; /* turn on LED1 */
+        LATGSET = LED2;
     #else
         /* Set up PmodSTEM LEDs */
         PORTSetPinsDigitalOut(IOPORT_B, SM_LEDS);
         LATBCLR = SM_LEDS; /* Clear all SM LED bits */
         LATBSET = LEDA;
+        LATBSET = LEDB;
     #endif
     
     /* Enable multi-vector interrupts */
