@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c ../I2C.c ../LCD.c ../comm.c ../vUART_ISR_Wrapper.S
+SOURCEFILES_QUOTED_IF_SPACED=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c ../I2C.c ../LCD.c ../comm.c ../vUART_ISR_Wrapper.S ../vBTN1_ISR_Wrapper.S
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o ${OBJECTDIR}/_ext/1472/I2C.o ${OBJECTDIR}/_ext/1472/LCD.o ${OBJECTDIR}/_ext/1472/comm.o ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/332309696/port.o.d ${OBJECTDIR}/_ext/332309696/port_asm.o.d ${OBJECTDIR}/_ext/449926602/tasks.o.d ${OBJECTDIR}/_ext/449926602/list.o.d ${OBJECTDIR}/_ext/1884096877/heap_4.o.d ${OBJECTDIR}/_ext/449926602/queue.o.d ${OBJECTDIR}/_ext/1472/main.o.d ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o.d ${OBJECTDIR}/_ext/1472/trcKernelPort.o.d ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o.d ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o.d ${OBJECTDIR}/_ext/1472/I2C.o.d ${OBJECTDIR}/_ext/1472/LCD.o.d ${OBJECTDIR}/_ext/1472/comm.o.d ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o ${OBJECTDIR}/_ext/1472/I2C.o ${OBJECTDIR}/_ext/1472/LCD.o ${OBJECTDIR}/_ext/1472/comm.o ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/332309696/port.o.d ${OBJECTDIR}/_ext/332309696/port_asm.o.d ${OBJECTDIR}/_ext/449926602/tasks.o.d ${OBJECTDIR}/_ext/449926602/list.o.d ${OBJECTDIR}/_ext/1884096877/heap_4.o.d ${OBJECTDIR}/_ext/449926602/queue.o.d ${OBJECTDIR}/_ext/1472/main.o.d ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o.d ${OBJECTDIR}/_ext/1472/trcKernelPort.o.d ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o.d ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o.d ${OBJECTDIR}/_ext/1472/I2C.o.d ${OBJECTDIR}/_ext/1472/LCD.o.d ${OBJECTDIR}/_ext/1472/comm.o.d ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.d ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o ${OBJECTDIR}/_ext/1472/I2C.o ${OBJECTDIR}/_ext/1472/LCD.o ${OBJECTDIR}/_ext/1472/comm.o ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o
+OBJECTFILES=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o ${OBJECTDIR}/_ext/1472/I2C.o ${OBJECTDIR}/_ext/1472/LCD.o ${OBJECTDIR}/_ext/1472/comm.o ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o
 
 # Source Files
-SOURCEFILES=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c ../I2C.c ../LCD.c ../comm.c ../vUART_ISR_Wrapper.S
+SOURCEFILES=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c ../I2C.c ../LCD.c ../comm.c ../vUART_ISR_Wrapper.S ../vBTN1_ISR_Wrapper.S
 
 
 CFLAGS=
@@ -114,6 +114,13 @@ ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o: ../vUART_ISR_Wrapper.S  nbproject/Ma
 	@${RM} ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.ok ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.err 
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.d" "${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.asm.d" -t $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC} $(MP_EXTRA_AS_PRE)  -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.d"  -o ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o ../vUART_ISR_Wrapper.S  -DXPRJ_default=$(CND_CONF)    -Wa,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_AS_POST),-MD="${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.asm.d",--defsym=__ICD2RAM=1,--defsym=__MPLAB_DEBUG=1,--gdwarf-2,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_PK3=1 -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
 	
+${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o: ../vBTN1_ISR_Wrapper.S  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o 
+	@${RM} ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.ok ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.err 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.d" "${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.asm.d" -t $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC} $(MP_EXTRA_AS_PRE)  -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.d"  -o ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o ../vBTN1_ISR_Wrapper.S  -DXPRJ_default=$(CND_CONF)    -Wa,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_AS_POST),-MD="${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.asm.d",--defsym=__ICD2RAM=1,--defsym=__MPLAB_DEBUG=1,--gdwarf-2,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_PK3=1 -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
+	
 else
 ${OBJECTDIR}/_ext/332309696/port_asm.o: ../../../Source/portable/MPLAB/PIC32MX/port_asm.S  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/332309696" 
@@ -128,6 +135,13 @@ ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o: ../vUART_ISR_Wrapper.S  nbproject/Ma
 	@${RM} ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o 
 	@${RM} ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.ok ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.err 
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.d" "${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.asm.d" -t $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC} $(MP_EXTRA_AS_PRE)  -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.d"  -o ${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o ../vUART_ISR_Wrapper.S  -DXPRJ_default=$(CND_CONF)    -Wa,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_AS_POST),-MD="${OBJECTDIR}/_ext/1472/vUART_ISR_Wrapper.o.asm.d",--gdwarf-2 -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
+	
+${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o: ../vBTN1_ISR_Wrapper.S  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o 
+	@${RM} ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.ok ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.err 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.d" "${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.asm.d" -t $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC} $(MP_EXTRA_AS_PRE)  -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.d"  -o ${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o ../vBTN1_ISR_Wrapper.S  -DXPRJ_default=$(CND_CONF)    -Wa,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_AS_POST),-MD="${OBJECTDIR}/_ext/1472/vBTN1_ISR_Wrapper.o.asm.d",--gdwarf-2 -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
 	
 endif
 

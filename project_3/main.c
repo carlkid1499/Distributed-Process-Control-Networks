@@ -24,22 +24,31 @@
 #include "semphr.h"
 
 /* Carlos Home board development set if at home */
-#define HOME_PRO_MX7_BOARD 1
+#define HOME_PRO_MX7_BOARD 0
 /* ----- Hardware Setup ----- */
 static void prvSetupHardware( void );
 
 /* ----- Tasks ----- */
 static void EEPROM_Task(void *pvParameters);
+static void LCD_Task(void *pvParameters);
 
 /* ----- UART ISR ----- */
 void vUART_ISR_Handler(void);
 void __attribute__((interrupt(IPL2), vector(_UART_1_VECTOR))) vUART_ISR_Wrapper(void);
 
+/* ----- CNI ISR Handler ----- */
+void vBTN1_ISR_Handler(void);
+void __attribute__((interrupt(IPL1), vector(_CHANGE_NOTICE_VECTOR))) vBTN1_ISR_Wrapper(void);
+
+void hw_msDelay(unsigned int);
+
 /* Semaphore Handles */
 SemaphoreHandle_t EEPROM_Semaphore;
+SemaphoreHandle_t LCD_Semaphore;
 
 /* Queue Handles */
 QueueHandle_t UART_Q;
+QueueHandle_t LCD_Q;
 
 #if ( configUSE_TRACE_FACILITY == 1 )
     traceString str;
@@ -55,12 +64,48 @@ int main( void )
         str = xTraceRegisterString("Channel");
     #endif
     
-    /* Lets make a queue for the UART 80 max plus \r */  
+    /* Lets make a queue for the UART 80 characters + '\r' */  
     UART_Q = xQueueCreate(81, sizeof(char));
-    if (UART_Q == NULL)
+    if (UART_Q != NULL)
+    {
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "UART_Q! Created Successfully!");
+        #endif
+    }
+    else
     {
         #if ( configUSE_TRACE_FACILITY == 1 )
             vTracePrint(str, "Error creating! UART_Q!");
+        #endif
+        for(;;);
+    }
+    
+    /* Create a queue to hold LCD messages 
+    ** Will store length of message and
+    ** start address in a struct.
+    */
+    struct Message {
+        int ID;
+        int length;
+        unsigned char Start_Addr;
+    };
+    
+    struct Message msg;
+    msg.length = 0;
+    msg.Start_Addr = 0;
+    
+    LCD_Q = xQueueCreate(10, sizeof(struct Message));
+
+    if (LCD_Q != NULL)
+    {
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "LCD_Q! Created Successfully!");
+        #endif
+    }
+    else
+    {
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "Error creating! LCD_Q!");
         #endif
         for(;;);
     }
@@ -74,11 +119,21 @@ int main( void )
         for(;;);
     }
     
+    LCD_Semaphore = xSemaphoreCreateBinary(); // create that semaphore
+    if(LCD_Semaphore == NULL)
+    {
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "Error creating! LCD_SEMAPHORE!");
+        #endif
+        for(;;);
+    }
     
-/* Create the tasks then start the scheduler. */
-
-    /* Create the tasks defined within this file. */
+    
+    /* Create the tasks then start the scheduler. */
     xTaskCreate( EEPROM_Task, "EEPROM_Task", configMINIMAL_STACK_SIZE,
+                                    NULL, tskIDLE_PRIORITY+2, NULL );
+    /* Create the tasks then start the scheduler. */
+    xTaskCreate( LCD_Task, "LCD_Task", configMINIMAL_STACK_SIZE,
                                     NULL, tskIDLE_PRIORITY+1, NULL );
 
     vTaskStartScheduler();	/*  Finally start the scheduler. */
@@ -90,12 +145,14 @@ int main( void )
 
 void vUART_ISR_Handler(void)
 {
+    mU1RXIntEnable(0); // disable UART interrupts at beginning
     // local variables
     char buf;
     portBASE_TYPE xHigherPriorityTaskWoken = NULL;
     
     getcU1(&buf); // grab a char from terminal       
     putcU1(buf); // echo the character back
+    
     // Let's send it to the UART_Q 
     portBASE_TYPE UART_Q_Status = xQueueSendToBackFromISR(UART_Q, &buf, 0);
     if(UART_Q_Status != pdPASS)
@@ -105,9 +162,8 @@ void vUART_ISR_Handler(void)
         #endif
     }
     
-    // Clear the RX interrupt Flag
-    INTClearFlag(INT_SOURCE_UART_RX(UART1));
-    
+    mU1RXClearIntFlag(); // clear the UART interrupt flag
+    mU1RXIntEnable(1); // enable UART interrupts at beginning
     if (buf == '\r') // did we get a return?
     {
         char message[] = "Sending message to EEPROM!...\n";
@@ -118,20 +174,50 @@ void vUART_ISR_Handler(void)
         #else
             LATBCLR = LEDA;
         #endif
-
-        /* Let's give a semaphore to unblock LEDCHandler_Task*/
+           
+        /* Let's give a semaphore to unblock EEPROM_Task*/
         xSemaphoreGiveFromISR(EEPROM_Semaphore, &xHigherPriorityTaskWoken);
     }
+    // Did we wake a higher priority task? If yes witch to it.
     portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+}
+
+void vBTN1_ISR_Handler(void)
+{
+    portBASE_TYPE xHigherPriorityTaskWoken = NULL;
+    mCNIntEnable(0); // disable CN interrupts at beginning
+    hw_msDelay(20); // 20 ms button debounce
+    while (PORTReadBits(IOPORT_G, BTN1)); // poll button 1
+    hw_msDelay(20); // 20 ms button debounce
+    mCNClearIntFlag(); // Macro function to clear CNI flag
+    mCNIntEnable(1); // enable CN interrupts at end
+    /* ---- Give Semaphore to LCD_Task ---- */
+    xSemaphoreGiveFromISR(LCD_Semaphore, &xHigherPriorityTaskWoken);
+    portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+}
+
+void hw_msDelay(unsigned int mS) {
+    unsigned int tWait, tStart;
+    tStart = ReadCoreTimer(); // Read core timer count - SW Start breakpoint
+    tWait = (CORE_MS_TICK_RATE * mS); // Set time to wait
+    while ((ReadCoreTimer() - tStart) < tWait); // Wait for the time to pass
 }
 
 static void EEPROM_Task (void *pvParameters)
 {
     // this needs a bit of work.
     // Local Variables
-    char cbuf;
+    char charbuf;
     unsigned char SAddr = 0x00;
+    int message_ID = 1;
+    struct Message {
+        int ID;
+        int length;
+        unsigned char Start_Addr;
+    };
     
+    struct Message msg;
+
     /* As per most tasks, this task is implemented within an infinite loop.
      * Take the semaphore once to start with so the semaphore is empty before 
      * the infinite loop is entered.  The semaphore was created before the 
@@ -151,25 +237,69 @@ static void EEPROM_Task (void *pvParameters)
             vTracePrint(str, "EEPROM_Task received EEPROM_Semaphore");
         #endif
         
-        
-        portBASE_TYPE UART_Q_Status = xQueueReceive(UART_Q, &cbuf,0);
-        while((UART_Q_Status != pdFAIL) || (cbuf != '\r')) //we must have gotten something
+        int message_length = 0;
+        portBASE_TYPE UART_Q_Status = xQueueReceive(UART_Q, &charbuf,0);
+        while((UART_Q_Status != pdFAIL) && (charbuf != '\r')) //we must have gotten something
         {
-            // Send to EEPROM
-            EEPROM_WRITE(SAddr,&cbuf, 0);
-            EEPROM_POLL(); // poll  EEPROM for completion
-            SAddr = SAddr + 0x01; // increment address
-            // If next item is a 'r' loop stops
-            UART_Q_Status = xQueueReceive(UART_Q, &cbuf,0);
+            /* Send to the EERPOM */
+            putcU1(charbuf);
+            // by default we start at address 0x0
+            EEPROM_WRITE(SAddr, &charbuf, 1);
+            message_length = message_length + 1;
+            SAddr = SAddr + 1;
+            UART_Q_Status = xQueueReceive(UART_Q, &charbuf,0);
         }
-        // stopped here 9/24/2020
-        // Need a better way to store messages in  EEPROM
-        // I need to store the start and end addresses somewhere
-        // So the LCD task can read messages properly!
-        #if ( HOME_PRO_MX7_BOARD == 1 )
-            LATGSET = LED1;
-        #else
-            LATBSET = LEDA;
+        putsU1("\n\r");
+        // if we reach here message has been stored and UART should be ready to get another one
+        msg.ID = message_ID;
+        msg.length = message_length;
+        msg.Start_Addr = SAddr;
+        
+        // Send message to the LCD queue.
+        portBASE_TYPE LCD_Q_Status = xQueueSendToBackFromISR(LCD_Q, &msg, 0);
+        if(LCD_Q_Status != pdPASS)
+        {
+            #if ( configUSE_TRACE_FACILITY == 1 )
+                vTracePrint(str, "LCD_Q is full");
+            #endif
+            char message[] = "LCD_Q is full!";
+            putsU1(message);
+        }
+        
+        // Adjust some local variables
+        message_length = 0;
+        message_ID = message_ID + 1;
+    }
+}
+
+static void LCD_Task(void *pvParameters)
+{
+    // this needs a bit of work.
+    // Local Variables
+    struct Message {
+        int ID;
+        int length;
+        unsigned char Start_Addr;
+    };
+    struct Message msg;
+
+    /* As per most tasks, this task is implemented within an infinite loop.
+     * Take the semaphore once to start with so the semaphore is empty before 
+     * the infinite loop is entered.  The semaphore was created before the 
+     * scheduler was started so before this task ran for the first time.*/
+    xSemaphoreTake(LCD_Semaphore, 0);
+    
+    for(;;)
+    {
+        /* Attempt to get a semaphore. Will block until we get one. */
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "LCD_Task requesting LCD_SEMAPHORE");
+        #endif
+        xSemaphoreTake(LCD_Semaphore, portMAX_DELAY);
+
+        /* To get here we must have received a semaphore */
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "LCD_Task received LCD_Semaphore");
         #endif
     }
 }
@@ -180,14 +310,28 @@ static void prvSetupHardware( void )
     initialize_uart1(19200, 1); // 19200 Baud rate and odd parity
     INIT_EEPROM(); // initialize I2C resources
     
-    /* ----- Enable UART Interrupts ----- */
-    UARTSetFifoMode(UART1, UART_INTERRUPT_ON_RX_NOT_EMPTY); // Turn on receive RX interrupt
-    // Configure UART2 RX Interrupt
-    INTEnable(INT_SOURCE_UART_RX(UART1), INT_ENABLED);
-    INTSetVectorPriority(INT_VECTOR_UART(UART1), INT_PRIORITY_LEVEL_1);
-    INTSetVectorSubPriority(INT_VECTOR_UART(UART1), INT_SUB_PRIORITY_LEVEL_0);
-    /* ----- ------ ----- ----- ----- --- */
-
+    /* ----- Begin: Enable UART Interrupts ----- */
+    mU1RXIntEnable(1); //  Enable Uart 1 Rx Int
+    mU1SetIntPriority(1);
+    mU1SetIntSubPriority(0);
+    /* ----- End: Enable UART Interrupts ----- */
+    
+    
+    /* ----- BEGIN: CN Interrupts ----- */
+    unsigned int dummy; // used to hold PORT read value
+    // BTN1 and BTN2 pins set for input by Cerebot header file
+    // PORTSetPinsDigitalIn(IOPORT_G, BIT_6 | BIT7); //
+    // Enable CN for BTN1
+    mCNOpen(CN_ON, CN8_ENABLE, 0);
+    // Set CN interrupts priority level 1 sub priority level 0
+    mCNSetIntPriority(1); // Group priority (1 to 7)
+    mCNSetIntSubPriority(0); // Subgroup priority (0 to 3)
+    // read port to clear difference
+    dummy = PORTReadBits(IOPORT_G, BTN1);
+    mCNClearIntFlag(); // Clear CN interrupt flag
+    mCNIntEnable(1); // Enable CN interrupts
+    // Global interrupts must enabled to complete the initialization.
+    /* ----- END: CN Interrupts ----- */
     
 
     #if ( HOME_PRO_MX7_BOARD == 1 )
@@ -205,17 +349,6 @@ static void prvSetupHardware( void )
     /* Enable multi-vector interrupts */
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);  /* Do only once */
     INTEnableInterrupts();   /*Do as needed for global interrupt control */
-    
-//	/* Configure the hardware for maximum performance. */
-//	vHardwareConfigurePerformance();
-//
-//	/* Setup to use the external interrupt controller. */
-//	vHardwareUseMultiVectoredInterrupts();
-//
-//	portDISABLE_INTERRUPTS();
-//
-//	/* Setup the digital IO for the LED's. */
-//	vParTestInitialise();
 }
 /*-----------------------------------------------------------*/
 
