@@ -25,14 +25,14 @@
 #include "LCD.h"
 
 /* Carlos Home board development set if at home */
-#define HOME_PRO_MX7_BOARD 1
+#define HOME_PRO_MX7_BOARD 0
 /* ----- Hardware Setup ----- */
 static void prvSetupHardware( void );
 
 /* ----- Tasks ----- */
 static void EEPROM_Task(void *pvParameters);
 static void LCD_Task(void *pvParameters);
-
+static void HeatBeat_Task(void *pvParameters);
 /* ----- UART ISR ----- */
 void vUART_ISR_Handler(void);
 void __attribute__((interrupt(IPL2), vector(_UART_1_VECTOR))) vUART_ISR_Wrapper(void);
@@ -133,7 +133,10 @@ int main( void )
                                     NULL, tskIDLE_PRIORITY+1, NULL );
     /* Create the tasks then start the scheduler. */
     xTaskCreate( LCD_Task, "LCD_Task", configMINIMAL_STACK_SIZE,
-                                    NULL, tskIDLE_PRIORITY+1, NULL );
+                                    NULL, tskIDLE_PRIORITY+2, NULL );
+    xTaskCreate( HeatBeat_Task, "HeatBeat_Task", configMINIMAL_STACK_SIZE,
+                                    NULL, tskIDLE_PRIORITY+3, NULL );
+    
 
     vTaskStartScheduler();	/*  Finally start the scheduler. */
 
@@ -185,14 +188,16 @@ void vBTN1_ISR_Handler(void)
 {
     portBASE_TYPE xHigherPriorityTaskWoken = NULL;
     mCNIntEnable(0); // disable CN interrupts at beginning
-    hw_msDelay(20); // 20 ms button debounce
-    while (PORTReadBits(IOPORT_G, BTN1)); // poll button 1
-    hw_msDelay(20); // 20 ms button debounce
-    mCNClearIntFlag(); // Macro function to clear CNI flag
-    mCNIntEnable(1); // enable CN interrupts at end
+    //hw_msDelay(20); // 20 ms button debounce
+    //while (PORTReadBits(IOPORT_G, BTN1)); // poll button 1
+    //hw_msDelay(20); // 20 ms button debounce
+    //mCNClearIntFlag(); // Macro function to clear CNI flag
+    //mCNIntEnable(1); // enable CN interrupts at end
     /* ---- Give Semaphore to LCD_Task ---- */
     xSemaphoreGiveFromISR(LCD_Semaphore, &xHigherPriorityTaskWoken);
     portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+    //mCNClearIntFlag(); // Macro function to clear CNI flag
+    //mCNIntEnable(1); // enable CN interrupts at end
 }
 
 void hw_msDelay(unsigned int mS) {
@@ -304,6 +309,13 @@ static void LCD_Task(void *pvParameters)
             vTracePrint(str, "LCD_Task received LCD_Semaphore");
         #endif
         
+        vTaskDelay(pdMS_TO_TICKS(20)); // 20 ms button debounce
+        while (PORTReadBits(IOPORT_G, BTN1)); // poll button 1
+        vTaskDelay(pdMS_TO_TICKS(20)); // 20 ms button debounce
+        unsigned dummy = PORTReadBits(IOPORT_G, BTN1);
+        mCNClearIntFlag(); // Macro function to clear CNI flag
+
+    /* ---- Give Semaphore to LCD_Task ---- */
         // issue here... might be receiving same data over and over?!?!
         portBASE_TYPE LCD_Q_Status = xQueueReceive(LCD_Q, &(Receive_msg),0);
         vTaskDelay(5); // wait for data to copy over
@@ -320,9 +332,10 @@ static void LCD_Task(void *pvParameters)
             // Read From EEPROM and Print to UART
             EEPROM_READ(Address, Rmsg, length);
             EEPROM_POLL();
-            char message[] = "Read message from EEPROM: ";
+            char message[] = "Read message from EEPROM!\n";
             putsU1(message);
-            putsU1(Rmsg);
+            //putsU1(Rmsg);
+            LCD_puts_scroll(Rmsg);
         }
         else
         {
@@ -332,20 +345,40 @@ static void LCD_Task(void *pvParameters)
                 LATBSET = LEDB;
             #endif
         }
+        mCNIntEnable(1);
     }
 }
 
+static void HeatBeat_Task(void *pvParameters)
+{
+   // local task variables
+    TickType_t xLastWakeTick;
+
+    for (;;) {
+        xLastWakeTick = xTaskGetTickCount(); // Get the the current tick
+        #if ( HOME_PRO_MX7_BOARD == 1 )
+            LATGINV = LED3; /* Toggle LED3: by default it is off */
+        #else
+            LATBINV = LEDC; /* Toggle LEDC: by default it is off */
+        #endif
+
+        #if ( configUSE_TRACE_FACILITY == 1 )
+            vTracePrint(str, "LEDC Toggled");
+        #endif
+        vTaskDelayUntil(&xLastWakeTick, pdMS_TO_TICKS(1)); // delay for 1 ms
+    }
+}
 static void prvSetupHardware( void )
 {
     Cerebot_mx7cK_setup();
     initialize_uart1(19200, 1); // 19200 Baud rate and odd parity
     INIT_EEPROM(); // initialize I2C resources
-    //Timer1_Setup();
-    //Initialize_LCD();
+    Timer1_Setup();
+    Initialize_LCD();
     
     /* ----- Begin: Enable UART Interrupts ----- */
     mU1RXIntEnable(1); //  Enable Uart 1 Rx Int
-    mU1SetIntPriority(3);
+    mU1SetIntPriority(2);
     mU1SetIntSubPriority(0);
     /* ----- End: Enable UART Interrupts ----- */
     

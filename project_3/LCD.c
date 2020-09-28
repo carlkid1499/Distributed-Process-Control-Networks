@@ -1,6 +1,7 @@
 #include "LCD.h"
 #include <plib.h>
 #include "CerebotMX7cK.h"
+#include "string.h"
 
 #define Fsck 400000
 #define BRG_VAL ((FPB/2/Fsck)-2)
@@ -37,7 +38,7 @@ void Timer1_Setup() {
     //configure Timer 1 with internal clock, 1:1 prescale, PR1 for 1 ms period
     OpenTimer1(T1_ON | T1_PS_1_1, (T1_TICK - 1));
     // set up the timer interrupt with a priority of 2, sub priority 0
-    mT1SetIntPriority(2); // Group priority range: 1 to 7
+    mT1SetIntPriority(3); // Group priority range: 1 to 7
     mT1SetIntSubPriority(0); // Subgroup priority range: 0 to 3
     mT1IntEnable(1); // Enable T1 interrupts
     // Global interrupts must enabled to complete the initialization.
@@ -63,6 +64,38 @@ void LCD_puts(char *str)
     str++; // Increment string pointer    
     } 
 } //End of LCD_puts 
+
+void LCD_puts_scroll(char *str)
+{
+    // clear the screen first!
+    LCD_cls();
+    char * cptr;
+    char * topstr;
+    char * botstr;
+    // Let's split the string by spaces
+    cptr = strtok(str," ");
+    botstr = cptr;
+    writeLCD(0,0xC0); // second line
+    LCD_puts(botstr);
+    Timer1_delay(250);
+    // lets cycle through the tokens
+    while(cptr != NULL)
+    {
+        
+        cptr = strtok(NULL, " ");
+        if(cptr == NULL)
+            break;
+        topstr = botstr;
+        botstr = cptr;
+        LCD_cls(); // clear the screen
+        writeLCD(0,0x80); // move to first line
+        LCD_puts(topstr);
+        Timer1_delay(1000);
+        writeLCD(0,0xC0); // second line
+        LCD_puts(botstr);
+        Timer1_delay(1000);
+    }
+}
 
 void LCD_putc(char data)
 {
