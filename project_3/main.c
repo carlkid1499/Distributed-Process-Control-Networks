@@ -22,6 +22,7 @@
 #include "queue.h"
 #include "I2C.h"
 #include "semphr.h"
+#include "LCD.h"
 
 /* Carlos Home board development set if at home */
 #define HOME_PRO_MX7_BOARD 1
@@ -70,7 +71,7 @@ int main( void )
         str = xTraceRegisterString("Channel");
     #endif
     
-    /* Lets make a queue for the UART 80 characters + '\r' */  
+    /* Lets make a queue for the UART 80 characters + '\0' */
     UART_Q = xQueueCreate(81, sizeof(char));
     if (UART_Q != NULL)
     {
@@ -89,9 +90,10 @@ int main( void )
     /* Create a queue to hold LCD messages 
     ** Will store length of message and
     ** start address in a struct.
+    ** Queue with 10 copies of AMessage Struct. Got help from this link!
+    ** https://www.freertos.org/FreeRTOS_Support_Forum_Archive/August_2015/freertos_Send_a_struct_through_Queue_64d28ac3j.html
     */
-
-    LCD_Q = xQueueCreate(10, sizeof(&xMessage));
+     LCD_Q = xQueueCreate(10, sizeof(struct AMessage));
 
     if (LCD_Q != NULL)
     {
@@ -128,7 +130,7 @@ int main( void )
     
     /* Create the tasks then start the scheduler. */
     xTaskCreate( EEPROM_Task, "EEPROM_Task", configMINIMAL_STACK_SIZE,
-                                    NULL, tskIDLE_PRIORITY+2, NULL );
+                                    NULL, tskIDLE_PRIORITY+1, NULL );
     /* Create the tasks then start the scheduler. */
     xTaskCreate( LCD_Task, "LCD_Task", configMINIMAL_STACK_SIZE,
                                     NULL, tskIDLE_PRIORITY+1, NULL );
@@ -202,11 +204,10 @@ void hw_msDelay(unsigned int mS) {
 
 static void EEPROM_Task (void *pvParameters)
 {
-    // this needs a bit of work.
     // Local Variables
     char charbuf;
     int SAddr = 0x00;
-    struct AMessage *ptrxMessage;
+    struct AMessage Send_msg;
     /* As per most tasks, this task is implemented within an infinite loop.
      * Take the semaphore once to start with so the semaphore is empty before 
      * the infinite loop is entered.  The semaphore was created before the 
@@ -244,18 +245,15 @@ static void EEPROM_Task (void *pvParameters)
         charbuf = NULL;
         EEPROM_WRITE(SAddr, &charbuf, 1);
         EEPROM_POLL();
+        message_length = message_length + 1;
         SAddr = SAddr + 1;
         
         putsU1("\n\r");
         // if we reach here message has been stored and UART should be ready to get another one
-        struct AMessage msg1;
-        msg1.length = message_length;
-        msg1.Start_Addr = SAddr - message_length;
-        
-        ptrxMessage = &msg1;
+        Send_msg.length = message_length;
+        Send_msg.Start_Addr = SAddr - message_length;
 
-        // Send message to the LCD queue.
-        portBASE_TYPE LCD_Q_Status = xQueueSendToBack(LCD_Q, &ptrxMessage, 0);
+        portBASE_TYPE LCD_Q_Status = xQueueSendToBack(LCD_Q, (void *)&Send_msg, 0);
         vTaskDelay(5); // wait for data to copy over
         if(LCD_Q_Status != pdPASS)
         {
@@ -286,7 +284,7 @@ static void EEPROM_Task (void *pvParameters)
 
 static void LCD_Task(void *pvParameters)
 {
-    struct AMessage *ptrxMessage;
+    struct AMessage Receive_msg;
     /* As per most tasks, this task is implemented within an infinite loop.
      * Take the semaphore once to start with so the semaphore is empty before 
      * the infinite loop is entered.  The semaphore was created before the 
@@ -305,8 +303,9 @@ static void LCD_Task(void *pvParameters)
         #if ( configUSE_TRACE_FACILITY == 1 )
             vTracePrint(str, "LCD_Task received LCD_Semaphore");
         #endif
-
-        portBASE_TYPE LCD_Q_Status = xQueueReceive(LCD_Q, &(ptrxMessage),0);
+        
+        // issue here... might be receiving same data over and over?!?!
+        portBASE_TYPE LCD_Q_Status = xQueueReceive(LCD_Q, &(Receive_msg),0);
         vTaskDelay(5); // wait for data to copy over
         if(LCD_Q_Status != pdFAIL)
         {
@@ -315,6 +314,15 @@ static void LCD_Task(void *pvParameters)
             #else
                 LATBCLR = LEDB;
             #endif
+            int Address = Receive_msg.Start_Addr;
+            int length = Receive_msg.length;
+            char Rmsg[length];
+            // Read From EEPROM and Print to UART
+            EEPROM_READ(Address, Rmsg, length);
+            EEPROM_POLL();
+            char message[] = "Read message from EEPROM: ";
+            putsU1(message);
+            putsU1(Rmsg);
         }
         else
         {
@@ -324,13 +332,6 @@ static void LCD_Task(void *pvParameters)
                 LATBSET = LEDB;
             #endif
         }
-        int Address = ptrxMessage->Start_Addr;
-        int length = ptrxMessage->length;
-        char Rmsg[length];
-        // Issue reading the message back..
-        EEPROM_READ(Address, Rmsg, length);
-        EEPROM_POLL();
-        putsU1(Rmsg);
     }
 }
 
@@ -339,10 +340,12 @@ static void prvSetupHardware( void )
     Cerebot_mx7cK_setup();
     initialize_uart1(19200, 1); // 19200 Baud rate and odd parity
     INIT_EEPROM(); // initialize I2C resources
+    //Timer1_Setup();
+    //Initialize_LCD();
     
     /* ----- Begin: Enable UART Interrupts ----- */
     mU1RXIntEnable(1); //  Enable Uart 1 Rx Int
-    mU1SetIntPriority(1);
+    mU1SetIntPriority(3);
     mU1SetIntSubPriority(0);
     /* ----- End: Enable UART Interrupts ----- */
     

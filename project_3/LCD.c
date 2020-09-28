@@ -1,5 +1,55 @@
 #include "LCD.h"
 #include <plib.h>
+#include "CerebotMX7cK.h"
+
+#define Fsck 400000
+#define BRG_VAL ((FPB/2/Fsck)-2)
+#define T1_PRESCALE 1
+#define TOGGLES_PER_SEC 1000
+#define T1_TICK (FPB/T1_PRESCALE/TOGGLES_PER_SEC)
+
+void Initialize_LCD() {
+    Initialize_PMP();
+    // Page 11
+    Timer1_delay(30);
+    writeLCD(0, 0x38); // RS and then data
+    Timer1_delay(50);
+    writeLCD(0, 0x0f);
+    Timer1_delay(50);
+    writeLCD(0, 0x01);
+    Timer1_delay(5);
+}
+
+void Initialize_PMP() {
+    int cfg1 = PMP_ON | PMP_READ_WRITE_EN | PMP_READ_POL_HI | PMP_WRITE_POL_HI;
+    int cfg2 = PMP_DATA_BUS_8 | PMP_MODE_MASTER1 |
+            PMP_WAIT_BEG_1 | PMP_WAIT_MID_2 | PMP_WAIT_END_1;
+    int cfg3 = PMP_PEN_0; // only PMA0 enabled
+    int cfg4 = PMP_INT_OFF; // no interrupts used
+    mPMPOpen(cfg1, cfg2, cfg3, cfg4);
+    // see page 15-16 of Project6.pdf
+
+}
+
+void Timer1_Setup() {
+    /* ----- BEGIN Timer 1 interrupts ----- */
+    // Initialize Timer 1 for 1 ms
+    //configure Timer 1 with internal clock, 1:1 prescale, PR1 for 1 ms period
+    OpenTimer1(T1_ON | T1_PS_1_1, (T1_TICK - 1));
+    // set up the timer interrupt with a priority of 2, sub priority 0
+    mT1SetIntPriority(2); // Group priority range: 1 to 7
+    mT1SetIntSubPriority(0); // Subgroup priority range: 0 to 3
+    mT1IntEnable(1); // Enable T1 interrupts
+    // Global interrupts must enabled to complete the initialization.
+    /* ----- END: Timer 1 Interrupts ----- */
+}
+
+void Timer1_delay(int delay) {
+    while (delay--) {
+        while (!mT1GetIntFlag()); // Wait for interrupt flag to be set
+        mT1ClearIntFlag(); // Clear the interrupt flag
+    }
+}
 
 void LCD_cls()
 {
