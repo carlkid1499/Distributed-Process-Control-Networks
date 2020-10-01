@@ -1,0 +1,11 @@
+void Initialize_LCD();
+void Initialize_PMP();
+void Timer1_Setup();
+void Timer1_delay(int delay);
+void writeLCD(int addr, char c);
+int busyLCD();
+char readLCD(int addr);
+void LCD_putc(char data);
+void LCD_puts(char *str);
+void LCD_cls();
+void LCD_puts_scroll(char *str);
