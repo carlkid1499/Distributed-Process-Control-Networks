@@ -93,7 +93,7 @@ int main( void )
     ** Queue with 10 copies of AMessage Struct. Got help from this link!
     ** https://www.freertos.org/FreeRTOS_Support_Forum_Archive/August_2015/freertos_Send_a_struct_through_Queue_64d28ac3j.html
     */
-     LCD_Q = xQueueCreate(10, sizeof(struct AMessage));
+     LCD_Q = xQueueCreate(5, sizeof(struct AMessage));
 
     if (LCD_Q != NULL)
     {
@@ -133,9 +133,9 @@ int main( void )
                                     NULL, tskIDLE_PRIORITY+1, NULL );
     /* Create the tasks then start the scheduler. */
     xTaskCreate( LCD_Task, "LCD_Task", configMINIMAL_STACK_SIZE,
-                                    NULL, tskIDLE_PRIORITY+2, NULL );
+                                    NULL, tskIDLE_PRIORITY+1, NULL );
     xTaskCreate( HeatBeat_Task, "HeatBeat_Task", configMINIMAL_STACK_SIZE,
-                                    NULL, tskIDLE_PRIORITY+3, NULL );
+                                    NULL, tskIDLE_PRIORITY+2, NULL );
     
 
     vTaskStartScheduler();	/*  Finally start the scheduler. */
@@ -147,6 +147,9 @@ int main( void )
 
 void vUART_ISR_Handler(void)
 {
+    #if ( configUSE_TRACE_FACILITY == 1 )
+        vTracePrint(str, "Entered vUART_ISR_Handler");
+    #endif
     mU1RXIntEnable(0); // disable UART interrupts at beginning
     // local variables
     char buf;
@@ -182,29 +185,23 @@ void vUART_ISR_Handler(void)
     }
     // Did we wake a higher priority task? If yes witch to it.
     portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+    #if ( configUSE_TRACE_FACILITY == 1 )
+        vTracePrint(str, "Exited vUART_ISR_Handler");
+    #endif
 }
 
 void vBTN1_ISR_Handler(void)
 {
+    #if ( configUSE_TRACE_FACILITY == 1 )
+        vTracePrint(str, "Entered vBTN1_ISR_Handler");
+    #endif
     portBASE_TYPE xHigherPriorityTaskWoken = NULL;
-    mCNIntEnable(0); // disable CN interrupts at beginning
-    //hw_msDelay(20); // 20 ms button debounce
-    //while (PORTReadBits(IOPORT_G, BTN1)); // poll button 1
-    //hw_msDelay(20); // 20 ms button debounce
-    //mCNClearIntFlag(); // Macro function to clear CNI flag
-    //mCNIntEnable(1); // enable CN interrupts at end
-    /* ---- Give Semaphore to LCD_Task ---- */
+    mCNIntEnable(0);
     xSemaphoreGiveFromISR(LCD_Semaphore, &xHigherPriorityTaskWoken);
     portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
-    //mCNClearIntFlag(); // Macro function to clear CNI flag
-    //mCNIntEnable(1); // enable CN interrupts at end
-}
-
-void hw_msDelay(unsigned int mS) {
-    unsigned int tWait, tStart;
-    tStart = ReadCoreTimer(); // Read core timer count - SW Start breakpoint
-    tWait = (CORE_MS_TICK_RATE * mS); // Set time to wait
-    while ((ReadCoreTimer() - tStart) < tWait); // Wait for the time to pass
+    #if ( configUSE_TRACE_FACILITY == 1 )
+        vTracePrint(str, "Exited vBTN1_ISR_Handler");
+    #endif
 }
 
 static void EEPROM_Task (void *pvParameters)
@@ -236,14 +233,17 @@ static void EEPROM_Task (void *pvParameters)
         portBASE_TYPE UART_Q_Status = xQueueReceive(UART_Q, &charbuf,0);
         while((UART_Q_Status != pdFAIL) && (charbuf != '\r')) //we must have gotten something
         {
-            /* Send to the EERPOM */
             putcU1(charbuf);
+            /* Send to the EERPOM */
             // by default we start at address 0x0
-            EEPROM_WRITE(SAddr, &charbuf, 1);
-            EEPROM_POLL();
-            message_length = message_length + 1;
-            SAddr = SAddr + 1;
-            UART_Q_Status = xQueueReceive(UART_Q, &charbuf,0);
+            if (charbuf != '\b')
+            {   
+                EEPROM_WRITE(SAddr, &charbuf, 1);
+                EEPROM_POLL();
+                message_length = message_length + 1;
+                SAddr = SAddr + 1;
+                UART_Q_Status = xQueueReceive(UART_Q, &charbuf,0);
+            }
         }
         
         //terminate message with a NULL
@@ -265,6 +265,8 @@ static void EEPROM_Task (void *pvParameters)
             #if ( configUSE_TRACE_FACILITY == 1 )
                 vTracePrint(str, "LCD_Q is full");
             #endif
+            char message[] = "TO many messages! LCD queue is full! Try again!";
+            putsU1(message);
         }
         else
         {
@@ -315,8 +317,6 @@ static void LCD_Task(void *pvParameters)
         unsigned dummy = PORTReadBits(IOPORT_G, BTN1);
         mCNClearIntFlag(); // Macro function to clear CNI flag
 
-    /* ---- Give Semaphore to LCD_Task ---- */
-        // issue here... might be receiving same data over and over?!?!
         portBASE_TYPE LCD_Q_Status = xQueueReceive(LCD_Q, &(Receive_msg),0);
         vTaskDelay(5); // wait for data to copy over
         if(LCD_Q_Status != pdFAIL)
@@ -334,7 +334,7 @@ static void LCD_Task(void *pvParameters)
             EEPROM_POLL();
             char message[] = "Read message from EEPROM!\n";
             putsU1(message);
-            //putsU1(Rmsg);
+            putsU1(Rmsg);
             LCD_puts_scroll(Rmsg);
         }
         else
@@ -362,9 +362,9 @@ static void HeatBeat_Task(void *pvParameters)
             LATBINV = LEDC; /* Toggle LEDC: by default it is off */
         #endif
 
-        #if ( configUSE_TRACE_FACILITY == 1 )
-            vTracePrint(str, "LEDC Toggled");
-        #endif
+        //#if ( configUSE_TRACE_FACILITY == 1 )
+            //vTracePrint(str, "LEDC Toggled");
+        //#endif
         vTaskDelayUntil(&xLastWakeTick, pdMS_TO_TICKS(1)); // delay for 1 ms
     }
 }

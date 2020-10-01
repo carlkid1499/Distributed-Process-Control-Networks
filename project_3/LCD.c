@@ -69,9 +69,9 @@ void LCD_puts_scroll(char *str)
 {
     // clear the screen first!
     LCD_cls();
-    char * cptr;
-    char * topstr;
-    char * botstr;
+    char * cptr = NULL;
+    char * topstr = NULL;
+    char * botstr = NULL;
     // Let's split the string by spaces
     cptr = strtok(str," ");
     botstr = cptr;
@@ -90,7 +90,7 @@ void LCD_puts_scroll(char *str)
         LCD_cls(); // clear the screen
         writeLCD(0,0x80); // move to first line
         LCD_puts(topstr);
-        Timer1_delay(1000);
+        Timer1_delay(10);
         writeLCD(0,0xC0); // second line
         LCD_puts(botstr);
         Timer1_delay(1000);
