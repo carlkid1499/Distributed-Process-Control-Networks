@@ -15,7 +15,9 @@ static void prvSetupHardware( void );
 
 /* Simple Tasks that light a specific LED when running  */
 static void prvTestTask1( void *pvParameters );
-static void prvTestTask2( void *pvParameters );
+static void IOUnitTask( void *pvParameters );
+static void CntrlUnitTask( void *pvParameters );
+static void LCDGateTask( void *pvParameters );
 
 
 #define HOMEBOARD 1
@@ -48,18 +50,6 @@ int main( void )
     return 0;
 }  /* End of main */
 
-/* prvTestTask1 Function Description *****************************************
- * SYNTAX:          static void prvTestTask1( void *pvParameters );
- * KEYWORDS:        RTOS, Task
- * DESCRIPTION:     If LEDA is not lit, all LEDs are turned off and LEDA is
- *                  turned on. Increments a counter each time the task is
- *                  resumed.
- * PARAMETER 1:     void pointer - data of unspecified data type sent from
- *                  RTOS scheduler
- * RETURN VALUE:    None (There is no returning from this function)
- * NOTES:           LEDA is switched on and LEDB switched off if LEDA was
- *                  detected as off.
- * END DESCRIPTION ************************************************************/
 static void prvTestTask1( void *pvParameters )
 {
     for( ;; )
@@ -91,6 +81,9 @@ static void prvTestTask1( void *pvParameters )
 static void prvSetupHardware( void )
 {
     Cerebot_mx7cK_setup();
+    
+    /* ----- ENABLE I2C1 for IR SENSOR ----- */
+    INIT_IRSENSOR();
     
     /* ----- CAN BUS INITS ----- */
     CAN1Init();
