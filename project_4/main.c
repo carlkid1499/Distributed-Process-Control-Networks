@@ -82,12 +82,31 @@ static void prvTestTask1( void *pvParameters )
 
 static void IOUnitTask (void *pvParameters)
 {   
-    char unsigned ram_addr = 0x07;
-    int len = 2;
-    char SMBusdata[len];
+    // Temperature array
+    float temp_Array[10];
+    int i = 0;
     for(;;)
     {
-      IR_READ(ram_addr,SMBusdata,len);
+      // Note IR_READ puts LSB, MSB, and PEC in an array in order listed
+      int data[3];
+      IR_READ(data);
+      
+      // Convert Temp to Kelvin
+      float Kelvin = (float)((data[1] << 8) | data[0])* 0.02;
+      
+      // Convert Temp to Celsius
+      float Celsius = Kelvin - 273.15;
+
+      // Convert Temp to Fahrenheit
+      float Fahrenheit = Celsius * (9/5) + 32;
+      
+      // Store the Fahrenheit value
+      temp_Array[i] = Fahrenheit;
+      if(i >= 10)
+          i = 0;
+      else
+          i++;
+      
       vTaskDelay(pdMS_TO_TICKS(500)); // delay 500ms
     }
 }

@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c ../CANFunctions.c ../sw_timer.c ../I2C.c
+SOURCEFILES_QUOTED_IF_SPACED=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c ../CANFunctions.c ../sw_timer.c ../LCD.c ../inputcapture.c ../pwm.c ../IR.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o ${OBJECTDIR}/_ext/1472/CANFunctions.o ${OBJECTDIR}/_ext/1472/sw_timer.o ${OBJECTDIR}/_ext/1472/I2C.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/332309696/port.o.d ${OBJECTDIR}/_ext/332309696/port_asm.o.d ${OBJECTDIR}/_ext/449926602/tasks.o.d ${OBJECTDIR}/_ext/449926602/list.o.d ${OBJECTDIR}/_ext/1884096877/heap_4.o.d ${OBJECTDIR}/_ext/449926602/queue.o.d ${OBJECTDIR}/_ext/1472/main.o.d ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o.d ${OBJECTDIR}/_ext/1472/trcKernelPort.o.d ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o.d ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o.d ${OBJECTDIR}/_ext/1472/CANFunctions.o.d ${OBJECTDIR}/_ext/1472/sw_timer.o.d ${OBJECTDIR}/_ext/1472/I2C.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o ${OBJECTDIR}/_ext/1472/CANFunctions.o ${OBJECTDIR}/_ext/1472/sw_timer.o ${OBJECTDIR}/_ext/1472/LCD.o ${OBJECTDIR}/_ext/1472/inputcapture.o ${OBJECTDIR}/_ext/1472/pwm.o ${OBJECTDIR}/_ext/1472/IR.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/_ext/332309696/port.o.d ${OBJECTDIR}/_ext/332309696/port_asm.o.d ${OBJECTDIR}/_ext/449926602/tasks.o.d ${OBJECTDIR}/_ext/449926602/list.o.d ${OBJECTDIR}/_ext/1884096877/heap_4.o.d ${OBJECTDIR}/_ext/449926602/queue.o.d ${OBJECTDIR}/_ext/1472/main.o.d ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o.d ${OBJECTDIR}/_ext/1472/trcKernelPort.o.d ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o.d ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o.d ${OBJECTDIR}/_ext/1472/CANFunctions.o.d ${OBJECTDIR}/_ext/1472/sw_timer.o.d ${OBJECTDIR}/_ext/1472/LCD.o.d ${OBJECTDIR}/_ext/1472/inputcapture.o.d ${OBJECTDIR}/_ext/1472/pwm.o.d ${OBJECTDIR}/_ext/1472/IR.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o ${OBJECTDIR}/_ext/1472/CANFunctions.o ${OBJECTDIR}/_ext/1472/sw_timer.o ${OBJECTDIR}/_ext/1472/I2C.o
+OBJECTFILES=${OBJECTDIR}/_ext/332309696/port.o ${OBJECTDIR}/_ext/332309696/port_asm.o ${OBJECTDIR}/_ext/449926602/tasks.o ${OBJECTDIR}/_ext/449926602/list.o ${OBJECTDIR}/_ext/1884096877/heap_4.o ${OBJECTDIR}/_ext/449926602/queue.o ${OBJECTDIR}/_ext/1472/main.o ${OBJECTDIR}/_ext/1472/CerebotMX7cK.o ${OBJECTDIR}/_ext/1472/trcKernelPort.o ${OBJECTDIR}/_ext/1472/trcSnapshotRecorder.o ${OBJECTDIR}/_ext/1472/trcStreamingRecorder.o ${OBJECTDIR}/_ext/1472/CANFunctions.o ${OBJECTDIR}/_ext/1472/sw_timer.o ${OBJECTDIR}/_ext/1472/LCD.o ${OBJECTDIR}/_ext/1472/inputcapture.o ${OBJECTDIR}/_ext/1472/pwm.o ${OBJECTDIR}/_ext/1472/IR.o
 
 # Source Files
-SOURCEFILES=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c ../CANFunctions.c ../sw_timer.c ../I2C.c
+SOURCEFILES=../../../Source/portable/MPLAB/PIC32MX/port.c ../../../Source/portable/MPLAB/PIC32MX/port_asm.S ../../../Source/tasks.c ../../../Source/list.c ../../../Source/portable/MemMang/heap_4.c ../../../Source/queue.c ../main.c ../CerebotMX7cK.c ../trcKernelPort.c ../trcSnapshotRecorder.c ../trcStreamingRecorder.c ../CANFunctions.c ../sw_timer.c ../LCD.c ../inputcapture.c ../pwm.c ../IR.c
 
 
 CFLAGS=
@@ -192,11 +192,29 @@ ${OBJECTDIR}/_ext/1472/sw_timer.o: ../sw_timer.c  nbproject/Makefile-${CND_CONF}
 	@${RM} ${OBJECTDIR}/_ext/1472/sw_timer.o 
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/sw_timer.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/sw_timer.o.d" -o ${OBJECTDIR}/_ext/1472/sw_timer.o ../sw_timer.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
 	
-${OBJECTDIR}/_ext/1472/I2C.o: ../I2C.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/1472/LCD.o: ../LCD.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
-	@${RM} ${OBJECTDIR}/_ext/1472/I2C.o.d 
-	@${RM} ${OBJECTDIR}/_ext/1472/I2C.o 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/I2C.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/I2C.o.d" -o ${OBJECTDIR}/_ext/1472/I2C.o ../I2C.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
+	@${RM} ${OBJECTDIR}/_ext/1472/LCD.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/LCD.o 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/LCD.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/LCD.o.d" -o ${OBJECTDIR}/_ext/1472/LCD.o ../LCD.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
+	
+${OBJECTDIR}/_ext/1472/inputcapture.o: ../inputcapture.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/inputcapture.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/inputcapture.o 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/inputcapture.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/inputcapture.o.d" -o ${OBJECTDIR}/_ext/1472/inputcapture.o ../inputcapture.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
+	
+${OBJECTDIR}/_ext/1472/pwm.o: ../pwm.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/pwm.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/pwm.o 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/pwm.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/pwm.o.d" -o ${OBJECTDIR}/_ext/1472/pwm.o ../pwm.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
+	
+${OBJECTDIR}/_ext/1472/IR.o: ../IR.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/IR.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/IR.o 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/IR.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/IR.o.d" -o ${OBJECTDIR}/_ext/1472/IR.o ../IR.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
 	
 else
 ${OBJECTDIR}/_ext/332309696/port.o: ../../../Source/portable/MPLAB/PIC32MX/port.c  nbproject/Makefile-${CND_CONF}.mk
@@ -271,11 +289,29 @@ ${OBJECTDIR}/_ext/1472/sw_timer.o: ../sw_timer.c  nbproject/Makefile-${CND_CONF}
 	@${RM} ${OBJECTDIR}/_ext/1472/sw_timer.o 
 	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/sw_timer.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/sw_timer.o.d" -o ${OBJECTDIR}/_ext/1472/sw_timer.o ../sw_timer.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
 	
-${OBJECTDIR}/_ext/1472/I2C.o: ../I2C.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/_ext/1472/LCD.o: ../LCD.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
-	@${RM} ${OBJECTDIR}/_ext/1472/I2C.o.d 
-	@${RM} ${OBJECTDIR}/_ext/1472/I2C.o 
-	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/I2C.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/I2C.o.d" -o ${OBJECTDIR}/_ext/1472/I2C.o ../I2C.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
+	@${RM} ${OBJECTDIR}/_ext/1472/LCD.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/LCD.o 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/LCD.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/LCD.o.d" -o ${OBJECTDIR}/_ext/1472/LCD.o ../LCD.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
+	
+${OBJECTDIR}/_ext/1472/inputcapture.o: ../inputcapture.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/inputcapture.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/inputcapture.o 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/inputcapture.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/inputcapture.o.d" -o ${OBJECTDIR}/_ext/1472/inputcapture.o ../inputcapture.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
+	
+${OBJECTDIR}/_ext/1472/pwm.o: ../pwm.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/pwm.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/pwm.o 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/pwm.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/pwm.o.d" -o ${OBJECTDIR}/_ext/1472/pwm.o ../pwm.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
+	
+${OBJECTDIR}/_ext/1472/IR.o: ../IR.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/_ext/1472" 
+	@${RM} ${OBJECTDIR}/_ext/1472/IR.o.d 
+	@${RM} ${OBJECTDIR}/_ext/1472/IR.o 
+	@${FIXDEPS} "${OBJECTDIR}/_ext/1472/IR.o.d" $(SILENT) -rsi ${MP_CC_DIR}../  -c ${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -D_SUPPRESS_PLIB_WARNING -D_DISABLE_OPENADC10_CONFIGPORT_WARNING -I".." -I"../../Common/include" -I"../../../Source/include" -I"../../../Source/portable/MPLAB/PIC32MX" -I"../../../../TraceRecorder/include" -MMD -MF "${OBJECTDIR}/_ext/1472/IR.o.d" -o ${OBJECTDIR}/_ext/1472/IR.o ../IR.c    -DXPRJ_default=$(CND_CONF)    $(COMPARISON_BUILD)  -I ../../../Source/include -I ../../../Source/portable/MPLAB/PIC32MX -I ../../Common/include -I ../
 	
 endif
 
