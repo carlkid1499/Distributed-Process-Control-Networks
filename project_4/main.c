@@ -40,7 +40,9 @@ int main( void )
 /* Create the tasks then start the scheduler. */
 
     /* Create the tasks defined within this file. */
-    xTaskCreate( prvTestTask1, "Tst1", configMINIMAL_STACK_SIZE,
+    xTaskCreate( prvTestTask1, "prvTestTask1", configMINIMAL_STACK_SIZE,
+                                    NULL, tskIDLE_PRIORITY, NULL );
+    xTaskCreate( IOUnitTask, "IOUnitTask", configMINIMAL_STACK_SIZE,
                                     NULL, tskIDLE_PRIORITY, NULL );
 
     vTaskStartScheduler();	/*  Finally start the scheduler. */
@@ -78,6 +80,17 @@ static void prvTestTask1( void *pvParameters )
     }
 }  /* End of prvTestTask1 */
 
+static void IOUnitTask (void *pvParameters)
+{   
+    char unsigned ram_addr = 0x07;
+    int len = 2;
+    char SMBusdata[len];
+    for(;;)
+    {
+      IR_READ(ram_addr,SMBusdata,len);
+      vTaskDelay(pdMS_TO_TICKS(500)); // delay 500ms
+    }
+}
 static void prvSetupHardware( void )
 {
     Cerebot_mx7cK_setup();

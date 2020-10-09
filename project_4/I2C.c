@@ -5,12 +5,12 @@
 /* Setting Parameters for SMBus which are similar to I2C */
 #define Fsck 100000
 #define BRG_VAL ((FPB/2/Fsck)-2)
-#define SLAVE_ADDRESS 0xB4
+#define SLAVE_ADDRESS 0x5A
 #define EEPROM_PAGE_LEN 64
 
 void INIT_IRSENSOR() {
     // enable I2C peripheral number 1. That's the one that the IR sensor uses
-    OpenI2C1(I2C_EN, BRG_VAL); // enable I2C peripheral
+    OpenI2C1(I2C_SM_EN, BRG_VAL); // enable I2C peripheral
 }
 
 void INIT_EEPROM() {
@@ -30,8 +30,8 @@ int IR_READ(int ram_addr, char *SMBusdata, int len) {
     // Create the SMBus address
     char SMBusframe[3];
     SMBusframe[0] = ((SLAVE_ADDRESS << 1) | 0); // 0 is write
-    SMBusframe[1] = MSB_temp_addr; // Memory Address MSB 7 bits long 0 - 6
-    SMBusframe[2] = LSB_temp_addr; //  Memory Address LSB 8 bits long 0 - 7
+    SMBusframe[1] = MSB_temp_addr;
+    SMBusframe[2] = LSB_temp_addr;
 
     // Initiate a Read from  EEPROM
     int datasz = len;
@@ -43,29 +43,24 @@ int IR_READ(int ram_addr, char *SMBusdata, int len) {
     MasterWriteI2C1(SMBusframe[0]);
     AckI2C1();
     MasterWriteI2C1(SMBusframe[1]);
+    AckI2C1();
     MasterWriteI2C1(SMBusframe[2]);
     AckI2C1();
-    RestartI2C1();
-    
-    
+    RestartI2C1();    
 
     // Reset the index
     index = 0;
-    IdleI2C1();
     MasterWriteI2C1((SLAVE_ADDRESS << 1) | 1); // 1 is read
     AckI2C1();
     while (datasz - 1) {
         SMBusbyte = MasterReadI2C1();
         SMBusdata[index++] = SMBusbyte;
-        AckI2C1(); // ack after each byte you read
-        IdleI2C1();
+        AckI2C1();
         datasz--;
     }
     SMBusbyte = MasterReadI2C1();
     SMBusdata[index++] = SMBusbyte;
 
-    AckI2C1(); // End read with a ACK
-    IdleI2C1();
     StopI2C1();
     IdleI2C1();
 }
