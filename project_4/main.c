@@ -9,18 +9,20 @@
 #include "GenericTypeDefs.h"
 #include "CANFunctions.h"
 
+/* ----- Other includes ----- */
+#include "IR.h"
+#include "pwm.h"
+#include "inputcapture.h"
+#include "LCD.h"
+
 /* ----- hardware setup ----- */
 static void prvSetupHardware( void );
 
 
 /* Simple Tasks that light a specific LED when running  */
-static void prvTestTask1( void *pvParameters );
 static void IOUnitTask( void *pvParameters );
 static void CntrlUnitTask( void *pvParameters );
 static void LCDGateTask( void *pvParameters );
-
-
-#define HOMEBOARD 1
 
 #if ( configUSE_TRACE_FACILITY == 1 )
     traceString str;
@@ -40,7 +42,7 @@ int main( void )
 /* Create the tasks then start the scheduler. */
 
     /* Create the tasks defined within this file. */
-    xTaskCreate( prvTestTask1, "prvTestTask1", configMINIMAL_STACK_SIZE,
+    xTaskCreate( CntrlUnitTask, "CntrlUnitTask", configMINIMAL_STACK_SIZE,
                                     NULL, tskIDLE_PRIORITY, NULL );
     xTaskCreate( IOUnitTask, "IOUnitTask", configMINIMAL_STACK_SIZE,
                                     NULL, tskIDLE_PRIORITY, NULL );
@@ -52,41 +54,21 @@ int main( void )
     return 0;
 }  /* End of main */
 
-static void prvTestTask1( void *pvParameters )
-{
-    for( ;; )
-    {
-	/* In this loop, we wait till we have 1 second tick. Each second CAN1 will
- * send a message to CAN2 and toggles LEDA. When CAN2 receives this message
- * it toggles LEDD. It then sends a message to CAN1 and toggles LEDB. When
- * CAN1 receives this message it toggles LEDC. If one second is up then
- * CAN1 sends a message to CAN2 to toggle LEDA and the process repeats. */
-
-        if(PeriodMs(0) == 0)
-        {
-            CAN1TxSendLEDMsg();	/* Function is defined in CANFunctions.c */
-            PeriodMs(1000);
-        }
-
-/* CAN2RxMsgProcess will check if CAN2 has received a message from CAN1 and
- * will toggle LEDD. It will send a message to CAN1 to toggle LEDB. */
-
-        CAN2RxMsgProcess();     /* Function is defined in CANFunctions.c */
-
-/* CAN1RxMsgProcess() will check if CAN1  has received a message from CAN2 and
- * will toggle LEDC. */
-
-        CAN1RxMsgProcess();     /* Function is defined in CANFunctions.c */
-    }
-}  /* End of prvTestTask1 */
-
 static void IOUnitTask (void *pvParameters)
 {   
-    // Temperature array
-    float temp_Array[10];
+    /* ----- IOUnit Task should use the CAN2 Module ----- */
+    //  Motor RPS of 10 floats
+    extern float RPS;
+    float RPS_Array[] = {0,0,0,0,0,0,0,0,0,0};
     int i = 0;
+    
+    // Initial PWM
+    int start_PWM = 0;
+    
     for(;;)
     {
+      
+      /* ----- Begin: IR Sensor Readings ----- */
       // Note IR_READ puts LSB, MSB, and PEC in an array in order listed
       int data[3];
       IR_READ(data);
@@ -99,17 +81,57 @@ static void IOUnitTask (void *pvParameters)
 
       // Convert Temp to Fahrenheit
       float Fahrenheit = Celsius * (9/5) + 32;
+      /* ----- End: IR Sensor Readings ----- */
       
-      // Store the Fahrenheit value
-      temp_Array[i] = Fahrenheit;
+      /* ----- Begin: RPS Readings ----- */
+      RPS_Array[i] = RPS;
       if(i >= 10)
           i = 0;
       else
           i++;
+      /* ----- End: RPS Sensor Readings ----- */
       
+      /* ----- Begin: Remote Transmission Request ----- */
+      /* CAN2RxMsgProcess will check if CAN2 has received a message from CAN1 and
+      * will toggle LEDD. It will send a message to CAN1 to toggle LEDB. */
+
+      CAN2RxMsgProcess();     /* Function is defined in CANFunctions.c */
+      /* ----- End: Remote Transmission Request ----- */
+      
+      /* ----- Begin: Data Frames with PWM Settings ----- */
+      
+      /* ----- End: Data Frames with PWM Settings ----- */
+
       vTaskDelay(pdMS_TO_TICKS(500)); // delay 500ms
     }
 }
+
+static void CntrlUnitTask(void *pvParameters)
+{
+    for(;;)
+    {
+        /* In this loop, we wait till we have 1 second tick. Each second CAN1 will
+        * send a message to CAN2 and toggles LEDA. When CAN2 receives this message
+        * it toggles LEDD. It then sends a message to CAN1 and toggles LEDB. When
+        * CAN1 receives this message it toggles LEDC. If one second is up then
+        * CAN1 sends a message to CAN2 to toggle LEDA and the process repeats. */
+
+        if(PeriodMs(0) == 0)
+        {
+            CAN1TxSendLEDMsg();	/* Function is defined in CANFunctions.c */
+            PeriodMs(1000);
+        }
+
+
+
+        /* CAN1RxMsgProcess() will check if CAN1  has received a message from CAN2 and
+        * will toggle LEDC. */
+
+        CAN1RxMsgProcess();     /* Function is defined in CANFunctions.c */
+    }
+        
+}
+
 static void prvSetupHardware( void )
 {
     Cerebot_mx7cK_setup();
@@ -121,11 +143,15 @@ static void prvSetupHardware( void )
     CAN1Init();
     CAN2Init();
     
-    /* Set up PmodSTEM LEDs */
+    /* ----- Init the input capture module ----- */
+    inputcapture_init();
+
+    /* ----- Set up PmodSTEM LEDs ----- */
     PORTSetPinsDigitalOut(IOPORT_B, SM_LEDS);
     LATBCLR = SM_LEDS;                      /* Clear all SM LED bits */
-
-    /* Enable multi-vector interrupts */
+    
+    
+    /* ----- Enable multi-vector interrupts ----- */
     INTConfigureSystem(INT_SYSTEM_CONFIG_MULT_VECTOR);  /* Do only once */
     INTEnableInterrupts();   /*Do as needed for global interrupt control */
     portDISABLE_INTERRUPTS();
