@@ -64,8 +64,8 @@
         <itemPath>../HTTPPrint.h</itemPath>
       </logicalFolder>
       <itemPath>../Configs/TCPIP ETH795.h</itemPath>
-      <itemPath>../VendingMachine.h</itemPath>
       <itemPath>../Configs/HardwareProfile.h</itemPath>
+      <itemPath>../main.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -127,7 +127,7 @@
         <itemPath>../MPFSImg2.c</itemPath>
         <itemPath>../../../Microchip/TCPIP Stack/ETHPIC32ExtPhySMSC8720.c</itemPath>
       </logicalFolder>
-      <itemPath>../VendingMachine.c</itemPath>
+      <itemPath>../main.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

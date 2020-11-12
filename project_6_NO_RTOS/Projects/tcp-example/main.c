@@ -52,7 +52,7 @@ APP_CONFIG AppConfig;
 static unsigned short wOriginalAppConfigChecksum;	// Checksum of the ROM defaults for AppConfig
 
 // Vending Machine Application Global Variables
-#include "VendingMachine.h"
+#include "main.h"
 #define __VENDINGMACHINE_C
 
 #define TCP_LOCAL_PORT 9921 // JFF
