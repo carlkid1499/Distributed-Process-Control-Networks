@@ -24,30 +24,20 @@
  * PMod and the parallel character LCD using the PMP bus.
  *
  ********************************************************************/
-#ifndef __VENDINGMACHINE_H
-	#define __VENDINGMACHINE_H
+#ifndef __MAIN_H
+	#define __MAIN_H
 
 	#include "TCPIP Stack/TCPIP.h"
 
 // Application Specific Global Variables
 	#define MAX_PRODUCTS		7u
 
-	typedef struct
-	{
-		BYTE name[11];
-		BYTE stock;
-		BYTE price;
-	//  BYTE refill;
-	} VEND_ITEM;
-
-	void VendSetLights(BOOL setOn);
-
 	#define BAUD_RATE       (19200)		// bps
 
 	extern APP_CONFIG AppConfig;
 	#define SaveAppConfig(a)
 
-	void WriteLCDMenu(void);		// Referred to in CustomHTTPApp.c
+	
 
 // Define a header structure for validating the AppConfig data structure in EEPROM/Flash
 	typedef struct

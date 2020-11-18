@@ -1,32 +1,3 @@
-/*********************************************************************
- *
- *  Modified this example to send UDP datagram when light status is changed
- *  JFF - 13 NOV 2017. Started with RD13 Lesson 2 of the Microchip Tutorials
- * 
- *  Main Application Entry Point
- *  Module for Microchip TCP/IP Stack
- *
- *********************************************************************
- * FileName:        VendingMachine.c
- * Dependencies:    TCPIP.h, MainDemo.h, VendingMachine.h
- * Processor:       PIC32
- * Compiler:        Microchip C32 v1.11b or higher
- * Company:         Microchip Technology, Inc.
- *
- *
- * Customized by: 	Richard Wall
- *					University of Idaho
- *					October 21, 2007
- *
- * This hardware profile is specifically modified for the 
- * Cerebot 32MX7 in combination with the UI Stepper motor 
- * PMod and the parallel character LCD using the PMP bus.
- *
- * Note:  UART not specified -- Needs to be set for UART1
- *
- ********************************************************************/
-
-
 #include <stdio.h>
 /*
  * This macro uniquely defines this file as the main entry point.
@@ -51,33 +22,19 @@
 APP_CONFIG AppConfig;
 static unsigned short wOriginalAppConfigChecksum;	// Checksum of the ROM defaults for AppConfig
 
-// Vending Machine Application Global Variables
+// Main Application Global Variables
+#include <plib.h>
 #include "main.h"
-#define __VENDINGMACHINE_C
+#define __MAIN_C
 
 #define TCP_LOCAL_PORT 9921 // JFF
 
 // Private functions.
 static void InitAppConfig(void);
 static void InitializeBoard(void);
-static void ProcessIO(void);
+static void TCP_FSM(void);
+static void ADC_INIT(void);
 
-// Global variables used for dynamic WEB variables and WEB controls
-VEND_ITEM Products[MAX_PRODUCTS];		// All items in the machine
-
-BYTE machineDesc[33];					// Machine descript string
-
-BYTE curItem;							// Current product being displayed
-BYTE curCredit;							// Current deposit credit
-DWORD displayTimeout;					// When SM_DISPLAY_WAIT times out
-
-// Globals used accessed by HTTPExecuteGet()
-
-    BYTE udp_tx_msg[128] = {0}; // JFF
-    signed udp_msg_rdy=0;       // JFF
-
-// Vending Machine Function Prototypes
-static void WritePriceLCD(BYTE price, BYTE position);
 
 /*	============= Main application entry point.	============= */
 int main(void)
@@ -85,18 +42,8 @@ int main(void)
 static DWORD t = 0;
 static DWORD dwLastIP = 0;
 
-// Initialize application specific hardware :  Cerebot 32MX7
+    // Initialize application specific hardware :  Cerebot 32MX7
     InitializeBoard();
-
-#if defined(USE_LCD)  // See TCPIP.h for method for setting this define
-	// Initialize and display the stack version on the LCD
-    LCDInit();
-    DelayMs(100);
-    // This writes both LCD lines
-    strcpypgm2ram((char*)LCDText, "Project 6       "
-								  "Carlos Santos   "); 
-    LCDUpdate();
-#endif
 
 // Initialize stack-related hardware components that may be 
 // required by the UART configuration routines
@@ -124,19 +71,10 @@ static DWORD dwLastIP = 0;
 #endif
     DelayMs(1000);
 
+    //  Init the ADC, but make sure it's off first
+    CloseADC10();
+    ADC_INIT();
 
-/* Now that all items are initialized, begin the co-operative
-    multitasking loop.  This infinite loop will continuously
-    execute all stack-related tasks, as well as your own
-    application's functions.  Custom functions should be added
-    at the end of this loop.
-  Note that this is a "co-operative mult-tasking" mechanism
-    where every task performs its tasks (whether all in one shot
-    or part of it) and returns so that other tasks can do their
-    job.
-    If a task needs very long time to do its job, it must be broken
-    down into smaller pieces so that other tasks can have CPU time.
-*/ 
    while(1)
     {
 // Blink LED0 (right most one) every second and poll Ethernet stack.
@@ -146,29 +84,12 @@ static DWORD dwLastIP = 0;
             LED0_IO ^= 1;	// Blink activity LED
         }
 
-/* This task performs normal stack task including checking
-   for incoming packet, type of packet and calling
-   appropriate stack entity to process it. */
         StackTask();
 
-/* This tasks invokes each of the core stack application tasks */
         StackApplications();
 
+        TCP_FSM();
 
-/*  Process application specific tasks here. For this Web Vending 
-	Machine app, this will include the Generic TCP server and Ping 
-	capability. Following that, we will process any IO from
-	the inputs on the board itself.  Any custom modules or processing 
-	you need to do should go here. 
-*/
-
-        ProcessIO();
-
-        
-/* If the local IP address has changed (ex: due to DHCP lease change)
-   write the new IP address to the LCD display, UART, and Announce 
-   service
-*/
         if(dwLastIP != AppConfig.MyIPAddr.Val)
         {
             dwLastIP = AppConfig.MyIPAddr.Val;
@@ -186,61 +107,7 @@ static DWORD dwLastIP = 0;
 	} // while (1))
 }
 
-// Writes an IP address to the LCD display and the UART as available
-/*********************************************************************
- * Function:        DisplayIPValue(IP_ADDR IPVal)
- * PreCondition:    LCD initialized
- * Input:           IP address
- * Output:          Writes text to LCD
- * Side Effects:    None
- * Overview:        Displays the IP address on the second line of 
- *					the LCD. If the UART is defined, the IP address
- *					is sentthere also.
- * Note:            This function is a rewrite of the equivalent
- *					function supplied with the WebVend demo.
- *                  
- ********************************************************************/
-void DisplayIPValue(IP_ADDR IPVal)
-{
-#if defined(STACK_USE_UART)
-	char UART_txt_buffer[32];
-	sprintf(UART_txt_buffer,"%u.%u.%u.%u"\n\r, IPVal.v[0], IPVal.v[1], IPVal.v[2], IPVal.v[3]);
-	putsUART((char *) UART_txt_buffer);
-#endif
-
-#ifdef USE_LCD 		// See TCPIP.h for defining USE_LCD
-	sprintf((char *) &LCDText[16],"%u.%u.%u.%u", IPVal.v[0], IPVal.v[1], IPVal.v[2], IPVal.v[3]);
-	LCDUpdate();	// See LCDblocking.c
-#endif
-}
-
-/*********************************************************************
- * Function:        ProcessIO(void)
- * PreCondition:    LCD initialized
- * Input:           None
- * Output:          Modifies Products global variable  structure
- *					HTTP_IO_WAITING if waiting for asynchronous process
- * Side Effects:    None
- * Overview:        This is the code to processes Button select. 
- *					The operation was originally designed for 4 button
- *					operations.  Simultaneously pressing BTN2 and BTN3 
- *					emulates the 4th button operation. BTN1 scrools item 
- *					menu right, BTN2 scroles item menu left, BTN2 and BTN3
- *					adds $0.25 to the coin box, BTN3 alone vends the item,
- *					decrements the stock, and substracts the price from
- *  				the accumulated value in the coin box.
- * Note:            Modifications from the Microochip WebVend demo code:
- *					1. Since the PIC32MX7 processor can execute this code
- *					so quickly, it is very difficult to press two
- *					buttons simultaneously. Hence once any button is
- *					detected as being bresses, a 100ms software delay is 
- *                  implemented in the debounce state.
- *					The code was originally written for buttons on the 
- *					Explorer 16 board that are active low. The buttons
- *					on the Cerebot 32MX7 board are active high.
- *                  
- ********************************************************************/
-static void ProcessIO(void)
+static void TCP_FSM(void)
 {
 static TCP_SOCKET uskt;
 
@@ -295,117 +162,6 @@ switch(fsmTCP)
             
 }
 
-/*********************************************************************
- * Function:        WriteLCDMenu(void)
- * PreCondition:    LCD initialized
- * Input:           None
- * Output:          None
- * Side Effects:    Updates LCD
- * Overview:        Maintains the LCD selection display for the  
- *					operations of the Vending maching application. 
- * Note:            See ProcessIO for system opearations
- *                  
- ********************************************************************/
-void WriteLCDMenu(void)
-{// Update the LCD screen
-	
-	// Blank the LCD display
-	strcpypgm2ram((char*)LCDText, (ROM char*)"                                ");
-	
-	// Show the name
-	strcpy((char*)LCDText, (char*)Products[curItem].name);
-	LCDText[strlen((char*)Products[curItem].name)] = ' ';
-	
-	// Show the price, or sold out status
-	if(Products[curItem].stock == 0u)
-	{
-		memcpypgm2ram(&LCDText[12], (ROM void*)"SOLD", 4);
-	}
-	else
-	{
-		LCDText[11] = '$';
-		WritePriceLCD(Products[curItem].price, 12);
-	}
-	
-	// Show the current credit
-	LCDText[16] = '$';
-	WritePriceLCD(curCredit, 17);
-	
-	// Show the vend button if available
-	if(Products[curItem].stock != 0u && Products[curItem].price <= curCredit)
-		memcpypgm2ram(&LCDText[22], (ROM void*)"Vend", 4);
-	else
-		memcpypgm2ram(&LCDText[23], (ROM void*)"--", 2);
-	
-	// Show the rest of the buttons
-	if(curItem != 0u)
-		memcpypgm2ram(&LCDText[27], (ROM void*)"<<", 2);
-	if(curItem != MAX_PRODUCTS-1)
-		memcpypgm2ram(&LCDText[30], (ROM void*)">>", 2);
-
-	// Update to the screen	
-	LCDUpdate();
-}
-
-/*********************************************************************
- * Function:        WritePriceLCD(BYTE price, BYTE position)
- * PreCondition:    LCD initialized
- * Input:           The item price and position to be displayed
- * Output:          None
- * Side Effects:    Updates LCD
- * Overview:        Maintains the LCD display for the item price for the 
- *					Vending maching application. This function does not 
- *					update the display. 
- * Note:            This functions uses sprintf to significantly reduce
- *					the amount of code provide by the WebVend demo.
- *                  
- ********************************************************************/
-static void WritePriceLCD(BYTE price, BYTE position)
-{
-	sprintf((char *) &LCDText[position],"%d.%02d", (price>>2), (price & 0x03)*25);
-}
-
-/*********************************************************************
- * Function:        VendSetLights(BOOL setOn)
- * PreCondition:    LEDs must be defined in the HWP file
- * Input:           The LED state: 
- * Output:          None
- * Side Effects:    Lights LEDs on hardware platform
- * Overview:        setOn = TRUE / False
- * Note:            All LEDs are set to the same state
- *                  
- ********************************************************************/
-void VendSetLights(BOOL setOn)
-{
-	LED6_IO = setOn;
-	Nop();
-	LED5_IO = setOn;
-	Nop();
-	LED4_IO = setOn;
-	Nop();
-	LED3_IO = setOn;
-	Nop();
-	LED2_IO = setOn;
-	Nop();
-	LED1_IO = setOn;
-}
-
-/****************************************************************************
-  Function:
-    static void InitializeBoard(void)
-  Description:
-    This routine initializes the hardware.  It is a generic initialization
-    routine for many of the Microchip development boards, using definitions
-    in HWP XXXX.h to determine specific initialization.
-  Precondition:
-    None
-  Parameters:
-    None - None
-  Returns:
-    None
-  Remarks:
-    None
-  ***************************************************************************/
 static void InitializeBoard(void)
 {	
 	DDPCONbits.JTAGEN = 0;
@@ -450,17 +206,6 @@ static void InitializeBoard(void)
 
 	LED_PUT(0x00);				// Turn the LEDs off
 		
-// Comment out line for Cerebot 32MX7
-//	CNPUESET = 0x00098000;		// Turn on weak pull ups on CN15, CN16, CN19 (RD5, RD7, RD13), which is connected to buttons on PIC32 Starter Kit boards
-
-/*	Not used for Cerebot PIC32
-// ADC
-	AD1CON1 = 0x84E4;			// Turn on, auto sample start, auto-convert, 12 bit mode (on parts with a 12bit A/D)
-	AD1CON2 = 0x0404;			// AVdd, AVss, int every 2 conversions, MUXA only, scan
-	AD1CON3 = 0x1003;			// 16 Tad auto-sample, Tad = 3*Tcy
-	AD1CSSL = 1<<2;				// Scan pot
-*/
-
 // UART
 	#if defined(STACK_USE_UART)
 
@@ -533,5 +278,68 @@ static void InitAppConfig(void)
 
 }  // End of InitAppConfig
 
-// End of VendingMachine.c
+// The init function for the ADC
+static void ADC_INIT(void)
+{
+   
+    // PLIB func to configure ADC, see line 72 of adc10.h referenced in plib.h
+    // Takes in 5 parameters
+    OpenADC10(ADC_MODULE_ON | // Turn it on
+              ADC_IDLE_CONTINUE | // Operate in IDLE mode... need to read more on this
+              ADC_FORMAT_INTG | // Set the data format 32-bit integer
+              ADC_CLK_AUTO | // set to auto convert
+              ADC_AUTO_SAMPLING_ON, // auto sampling
+              ADC_VREF_AVDD_AVSS | // set the reference voltages A/D Voltage reference configuration Vref+ is AVdd and Vref- is AVss
+              ADC_OFFSET_CAL_DISABLE | // Offset calibration disable (normal operation).. need to read more on this
+              ADC_SCAN_OFF | //  Read more on this page 20 of FRM 17
+              ADC_SAMPLES_PER_INT_8 | // Interrupt me after the completion for each 8th sample
+              ADC_BUF_8, // Buffer configured as two 8-word buffers
+              ADC_CONV_CLK_PB | // Use the PCLock for ADC conversions
+              ADC_SAMPLE_TIME_12, // auto sample time of 12 clocks
+              ENABLE_AN2_ANA, // Enable AN2 in analog mode
+              SKIP_SCAN_ALL // Skip all the following channels, we only want AN2
+            );
+    
+    // Lastly Enable.
+    DelayMs(100);    /* Ensure the correct sampling time has elapsed 
+                         * before starting a conversion.*/
+    EnableADC10();   
+    
+    // Configure ADC Interrupts
+    INTSetVectorPriority(INT_ADC_VECTOR, INT_PRIORITY_LEVEL_2);
+    INTSetVectorSubPriority (INT_ADC_VECTOR, INT_SUB_PRIORITY_LEVEL_3);
+    INTClearFlag(INT_AD1);
+    INTEnable   (INT_AD1, INT_ENABLED);
+
+}
+
+// ADC ISR
+void __ISR(_ADC_VECTOR, IPL2SOFT) ADC_Handler(void)
+{
+    int NewLevel[15];
+    
+    NewLevel[0]=ADC1BUF0;
+    NewLevel[1]=ADC1BUF1;
+    NewLevel[2]=ADC1BUF2;  
+    NewLevel[3]=ADC1BUF3;  
+    NewLevel[4]=ADC1BUF4;   
+    NewLevel[5]=ADC1BUF5;  
+    NewLevel[6]=ADC1BUF6;
+    NewLevel[7]=ADC1BUF7;
+    NewLevel[8]=ADC1BUF8;  
+    NewLevel[9]=ADC1BUF9;  
+    NewLevel[10]=ADC1BUFA;   
+    NewLevel[11]=ADC1BUFB;
+    NewLevel[12]=ADC1BUFC;
+    NewLevel[13]=ADC1BUFD;
+    NewLevel[14]=ADC1BUFE;
+    NewLevel[15]=ADC1BUFF;
+    INTClearFlag(INT_AD1);
+}
+
+
+
+// End of main.c
+
+
 
